@@ -17,6 +17,10 @@ from urllib import parse as urlparse
 import base64
 import json
 import random
+import signal
+import requests
+import queue
+import threading
 from uuid import uuid4
 from base64 import b64encode
 from Crypto.Cipher import AES, PKCS1_OAEP
@@ -32,7 +36,6 @@ try:
 except Exception:
     pass
 
-
 cprint('[•] CVE-2021-44228 - Apache Log4j RCE Scanner', "green")
 cprint('[•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.', "yellow")
 cprint('[•] Secure your External Attack Surface with FullHunt.io.', "yellow")
@@ -41,7 +44,9 @@ if len(sys.argv) <= 1:
     print('\n%s -h for help.' % (sys.argv[0]))
     exit(0)
 
-
+exitFlag = 0
+queueLock = threading.Lock()
+workQueue = queue.Queue()
 default_headers = {
     'User-Agent': 'log4j-scan (https://github.com/mazen160/log4j-scan)',
     # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
@@ -104,9 +109,65 @@ parser.add_argument("--custom-dns-callback-host",
                     dest="custom_dns_callback_host",
                     help="Custom DNS Callback Host.",
                     action='store')
+parser.add_argument("-t", "--threads",
+                    dest="threads",
+                    help="Threads number - [Default: 5].",
+                    default=5,
+                    type=int,
+                    action='store')
+
 
 args = parser.parse_args()
 
+############################################
+############### Ctrl + C ###################
+############################################
+
+def keyboardInterruptHandler(signal, frame):
+    global exitFlag
+    exitFlag = 1
+    cprint('[•] Operation was canceled by user!!!', "red")
+    exit(0)
+
+signal.signal(signal.SIGINT, keyboardInterruptHandler)
+
+############################################
+################ Threads ###################
+############################################
+
+class thread_request (threading.Thread):
+
+    def __init__(self, threadID, q, dns_callback_host):
+
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.q = q
+        self.dns_callback_host = dns_callback_host
+
+    def run(self):
+
+        cprint (" [-] Starting thread %s ... " % (self.threadID))
+        process_request(self.threadID, self.q, self.dns_callback_host)
+        cprint (" [-] Exiting thread %s." % (self.threadID))
+
+def process_request(threadID, q, dns_callback_host):
+    global exitFlag
+    global queueLock
+    while not exitFlag:
+        queueLock.acquire()
+        if not workQueue.empty():
+            url = q.get()
+            queueLock.release()
+
+            #print ("%s processing %s" % (threadID, url))
+            scan_url(url, dns_callback_host)
+
+        else:
+            queueLock.release()
+
+############################################
+################ Exploit ###################
+############################################
 
 def get_fuzzing_headers(payload):
     fuzzing_headers = {}
@@ -286,6 +347,9 @@ def scan_url(url, callback_host):
 
 
 def main():
+    global exitFlag
+    global workQueue
+
     urls = []
     if args.url:
         urls.append(args.url)
@@ -312,9 +376,34 @@ def main():
         dns_callback_host = dns_callback.domain
 
     cprint("[%] Checking for Log4j RCE CVE-2021-44228.", "magenta")
+
+    workQueue = queue.Queue(len(urls))
+    threads = []
+
+    # Fill the queue
+    queueLock.acquire()
     for url in urls:
+        workQueue.put(url)
         cprint(f"[•] URL: {url}", "magenta")
-        scan_url(url, dns_callback_host)
+    queueLock.release()
+
+    # Create new threads
+    for t in range(1,args.threads+1):
+        thread = thread_request(t, workQueue, dns_callback_host)
+        thread.start()
+        threads.append(thread)
+
+    # Wait for queue to empty
+    while not workQueue.empty() or exitFlag != 0:
+        time.sleep(1)
+        pass
+
+    # Notify threads it's time to exit
+    exitFlag = 1
+
+    # Wait for all threads to complete
+    for t in threads:
+        t.join()
 
     if args.custom_dns_callback_host:
         cprint("[•] Payloads sent to all URLs. Custom DNS Callback host is provided, please check your logs to verify the existence of the vulnerability. Exiting.", "cyan")
