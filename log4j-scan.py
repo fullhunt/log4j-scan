@@ -250,7 +250,7 @@ def scan_url(url, callback_host):
         cprint(f"[•] URL: {url} | PAYLOAD: {payload}", "cyan")
         if args.request_type.upper() == "GET" or args.run_all_tests:
             try:
-                requests.request(url=url,
+                requests.request(url=parsed_url["site"],
                                  method="GET",
                                  params={"v": payload},
                                  headers=get_fuzzing_headers(payload),
@@ -262,7 +262,7 @@ def scan_url(url, callback_host):
         if args.request_type.upper() == "POST" or args.run_all_tests:
             try:
                 # Post body
-                requests.request(url=url,
+                requests.request(url=parsed_url["site"],
                                  method="POST",
                                  params={"v": payload},
                                  headers=get_fuzzing_headers(payload),
