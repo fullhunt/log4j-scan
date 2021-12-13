@@ -31,9 +31,11 @@ $ python3 log4j-scan.py -h
 [•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.
 [•] Secure your External Attack Surface with FullHunt.io.
 usage: log4j-scan.py [-h] [-u URL] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing]
-                     [--wait-time WAIT_TIME] [--waf-bypass] [--dns-callback-provider DNS_CALLBACK_PROVIDER] [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST]
+                     [--wait-time WAIT_TIME] [--waf-bypass] [--dns-callback-provider DNS_CALLBACK_PROVIDER]
+                     [--dns-callback-interactsh-server DNS_CALLBACK_INTERACTSH_SERVER] [--dns-callback-interactsh-token DNS_CALLBACK_INTERACTSH_TOKEN]
+                     [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST]
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -u URL, --url URL     Check a single URL.
   -l USEDLIST, --list USEDLIST
@@ -50,6 +52,10 @@ optional arguments:
   --waf-bypass          Extend scans with WAF bypass payloads.
   --dns-callback-provider DNS_CALLBACK_PROVIDER
                         DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].
+  --dns-callback-interactsh-server DNS_CALLBACK_INTERACTSH_SERVER
+                        If interact.sh is the DNS Callback provider then the url can be specified - [Default: interact.sh].
+  --dns-callback-interactsh-token DNS_CALLBACK_INTERACTSH_TOKEN
+                        If interact.sh is the DNS Callback provider then the token can be specified.
   --custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST
                         Custom DNS Callback Host.
 ```
@@ -79,6 +85,11 @@ $ python3 log4j-scan.py -u https://log4j.lab.secbot.local --waf-bypass
 $ python3 log4j-scan.py -l urls.txt
 ```
 
+## Scan a single URL with custom interactsh server
+
+```shell
+$ python3 log4j-scan.py -u https://log4j.lab.secbot.local --dns-callback-interactsh-server interact.sh --dns-callback-interactsh-token '<replaceme>'
+```
 
 
 # Installation

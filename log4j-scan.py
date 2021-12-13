@@ -100,6 +100,16 @@ parser.add_argument("--dns-callback-provider",
                     help="DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].",
                     default="interact.sh",
                     action='store')
+parser.add_argument("--dns-callback-interactsh-server",
+                    dest="dns_callback_interactsh_server",
+                    help="If interact.sh is the DNS Callback provider then the url can be specified - [Default: interact.sh].",
+                    default="interact.sh",
+                    action='store')
+parser.add_argument("--dns-callback-interactsh-token",
+                    dest="dns_callback_interactsh_token",
+                    help="If interact.sh is the DNS Callback provider then the token can be specified.",
+                    default="",
+                    action='store')                    
 parser.add_argument("--custom-dns-callback-host",
                     dest="custom_dns_callback_host",
                     help="Custom DNS Callback Host.",
@@ -302,9 +312,10 @@ def main():
         cprint(f"[•] Using custom DNS Callback host [{args.custom_dns_callback_host}]. No verification will be done after sending fuzz requests.")
         dns_callback_host =  args.custom_dns_callback_host
     else:
-        cprint(f"[•] Initiating DNS callback server ({args.dns_callback_provider}).")
+        cprint(f"[•] Initiating DNS callback provider ({args.dns_callback_provider}).")
         if args.dns_callback_provider == "interact.sh":
-            dns_callback = Interactsh()
+            cprint(f"[•] Using Server ({args.dns_callback_interactsh_server}).")
+            dns_callback = Interactsh(token = args.dns_callback_interactsh_token, server = args.dns_callback_interactsh_server)
         elif args.dns_callback_provider == "dnslog.cn":
             dns_callback = Dnslog()
         else:
