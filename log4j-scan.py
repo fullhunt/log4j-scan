@@ -157,7 +157,7 @@ class Interactsh:
         self.public_key = rsa.publickey().exportKey()
         self.private_key = rsa.exportKey()
         self.token = token
-        self.server = server.lstrip('.') or 'interactsh.com'
+        self.server = server.lstrip('.') or 'interact.sh'
         self.headers = {
             "Content-Type": "application/json",
         }
@@ -183,7 +183,7 @@ class Interactsh:
         res = self.session.post(
             f"https://{self.server}/register", headers=self.headers, json=data, timeout=30)
         if 'success' not in res.text:
-            raise Exception("Can not initiate interactsh.com DNS callback client")
+            raise Exception("Can not initiate interact.sh DNS callback client")
 
     def pull_logs(self):
         result = []
