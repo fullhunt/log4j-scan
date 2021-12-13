@@ -34,7 +34,7 @@ if len(sys.argv) <= 1:
 
 
 default_headers = {
-    'User-Agent': 'struts-pwn (https://github.com/mazen160/log4j-scan)',
+    'User-Agent': 'log4j-scan (https://github.com/mazen160/log4j-scan)',
     # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
     'Accept': '*/*'  # not being tested to allow passing through checks on Accept header in older web-servers
 }
