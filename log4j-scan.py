@@ -246,6 +246,7 @@ def scan_url(url, callback_host):
     if args.waf_bypass_payloads:
         payloads.extend(generate_waf_bypass_payloads(f'{parsed_url["host"]}.{callback_host}', random_string))
     for payload in payloads:
+        print(url, get_fuzzing_headers(payload) )
         cprint(f"[•] URL: {url} | PAYLOAD: {payload}", "cyan")
         if args.request_type.upper() == "GET" or args.run_all_tests:
             try:
@@ -293,6 +294,7 @@ def main():
             for i in f.readlines():
                 if i == "" or i.startswith("#"):
                     continue
+                i = i.rstrip()
                 urls.append(i)
 
     dns_callback_host = ""
