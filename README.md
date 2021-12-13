@@ -25,12 +25,13 @@ It supports DNS OOB callbacks out of the box, there is no need to setup a DNS ca
 
 # Usage
 
-```shell
-$ python3 log4j-scan.py -h                                                   
+```python
+$ python3 log4j-scan.py -h
 [•] CVE-2021-44228 - Apache Log4j RCE Scanner
 [•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.
 [•] Secure your External Attack Surface with FullHunt.io.
-usage: log4j-scan.py [-h] [-u URL] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing] [--wait-time WAIT_TIME] [--waf-bypass]
+usage: log4j-scan.py [-h] [-u URL] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing]
+                     [--wait-time WAIT_TIME] [--waf-bypass] [--dns-callback-provider DNS_CALLBACK_PROVIDER] [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -47,6 +48,10 @@ optional arguments:
   --wait-time WAIT_TIME
                         Wait time after all URLs are processed (in seconds) - [Default: 5].
   --waf-bypass          Extend scans with WAF bypass payloads.
+  --dns-callback-provider DNS_CALLBACK_PROVIDER
+                        DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].
+  --custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST
+                        Custom DNS Callback Host.
 ```
 
 ## Scan a Single URL
