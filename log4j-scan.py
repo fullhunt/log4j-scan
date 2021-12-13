@@ -93,6 +93,7 @@ parser.add_argument("--wait-time",
                     dest="wait_time",
                     help="Wait time after all URLs are processed (in seconds) - [Default: 5].",
                     default=5,
+                    type=int,
                     action='store')
 parser.add_argument("--waf-bypass",
                     dest="waf_bypass_payloads",
