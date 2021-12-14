@@ -1,16 +1,12 @@
-# Ref: https://devguide.python.org/#branchstatus
-FROM python:3.10-slim-bullseye
+FROM python:3-alpine
 
-RUN useradd -ms /bin/bash appuser
-USER appuser
 WORKDIR /app
 
-COPY --chown=appuser:appuser requirements.txt requirements.txt
+COPY requirements.txt requirements.txt
 
+RUN apk add gcc g++ make libffi-dev openssl-dev
 RUN pip3 install -r requirements.txt
 
-ENV PATH="/home/appuser/.local/bin:${PATH}"
-
-COPY --chown=appuser:appuser ./ ./
+COPY . .
 
 ENTRYPOINT ["python", "log4j-scan.py" ]
