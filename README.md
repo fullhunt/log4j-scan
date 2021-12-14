@@ -36,6 +36,8 @@ usage: log4j-scan.py [-h] [-u URL] [-l USEDLIST] [--request-type REQUEST_TYPE] [
 optional arguments:
   -h, --help            show this help message and exit
   -u URL, --url URL     Check a single URL.
+  -p PROXY, --proxy PROXY
+                        Send requests through proxy.
   -l USEDLIST, --list USEDLIST
                         Check a list of URLs.
   --request-type REQUEST_TYPE
@@ -79,14 +81,23 @@ $ python3 log4j-scan.py -u https://log4j.lab.secbot.local --waf-bypass
 $ python3 log4j-scan.py -l urls.txt
 ```
 
-
-
 # Installation
 
 ```
 $ pip3 install -r requirements.txt
 ```
 
+# Docker Support
+
+```shell
+git clone https://github.com/fullhunt/log4j-scan.git
+cd log4j-scan
+sudo docker build -t log4j-scan .
+sudo docker run -it --rm log4j-scan
+
+# With URL list "urls.txt" in current directory
+docker run -it --rm -v $PWD:/data log4j-scan -l /data/urls.txt
+```
 
 # About FullHunt
 
