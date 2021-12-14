@@ -55,7 +55,15 @@ parser.add_argument("-u", "--url",
 parser.add_argument("-r", "--range",
                     dest="range",
                     help="network range in a.b.c.d/pq format",
-                    action='store')                    
+                    action='store')
+parser.add_argument("--ports-list",
+                    dest="portslist",
+                    help="list of ports e.g. [80,8080,443] to test against each IP of range",
+                    action='store')
+parser.add_argument("--protocols-list",
+                    dest="protocolslist",
+                    help="list of url prefix e.g. [http://,https://] to test against each IP of range",
+                    action='store')
 parser.add_argument("-p", "--proxy",
                     dest="proxy",
                     help="send requests through proxy",
@@ -319,17 +327,17 @@ def scan_one_ip(url):
     cmd_output = subprocess.getoutput("python log4j-scan.py -u " + url + " --run-all-test --waf-bypass")
     return (url, cmd_output)
 
-def scan_ip_range_multicore():
+def scan_ip_range_multicore(protocols,networkrange,ports):
 
-    ip_list = [str(ip) for ip in ipaddress.IPv4Network('192.168.1.0/24')]
-    url_prefix_list = [ "http://", "https://" ]
-    port_list = [ 80, 8080, 443 ]
-    
+    ip_list = [str(ip) for ip in ipaddress.IPv4Network(networkrange)]
     url_list = []
-    for up in url_prefix_list:
-        for port in port_list:
+    for up in protocols:
+        for port in ports:
             for ip in ip_list:
-                url_list.append(up+ip+":"+str(port))
+                url_list.append(up+ip+":"+port)
+    
+    print(url_list)
+    exit()
     
     process_count = int(multiprocessing.cpu_count()*0.75)
     if (process_count == 0):
@@ -338,7 +346,8 @@ def scan_ip_range_multicore():
     print("starting scan in multicore mode\n")
     print("maximum of",process_count, "cores will be used which is about 75% of CPU cores availables on this machine will be used\n")
     print("################################################################################")
-    print("log outputs will be printed after each processed file... please be patient...")
+    print("log outputs will be printed after each scanned URL... please be patient...")
+    print("a summary of vulnerable URL's will be printed at the end")
     print("################################################################################\n")
 
     workerfunct = functools.partial(scan_one_ip)
@@ -371,12 +380,20 @@ def main():
     cprint('[•] Secure your External Attack Surface with FullHunt.io.', "yellow")
     
     if not args.range:
-        single_threaded_main(args)
+        single_main(args)
     else:
-        scan_ip_range_multicore()
+        if (args.protocolslist):
+            protocolslist = args.protocolslist.lstrip('[').rstrip(']').split(",")
+        else:
+            protocolslist = ['http://']
+        if (args.portslist):
+            portslist = args.portslist.lstrip('[').rstrip(']').split(",")
+        else:
+            portslist = [ '80','443' ]
+        scan_ip_range_multicore(protocolslist,args.range,portslist)
 
 
-def single_threaded_main(args):
+def single_main(args):
     urls = []
     if args.url:
         urls.append(args.url)
