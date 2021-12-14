@@ -47,6 +47,7 @@ if len(sys.argv) <= 1:
 exitFlag = 0
 queueLock = threading.Lock()
 workQueue = queue.Queue()
+threads = []
 default_headers = {
     'User-Agent': 'log4j-scan (https://github.com/mazen160/log4j-scan)',
     # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
@@ -111,8 +112,8 @@ parser.add_argument("--custom-dns-callback-host",
                     action='store')
 parser.add_argument("-t", "--threads",
                     dest="threads",
-                    help="Threads number - [Default: 5].",
-                    default=5,
+                    help="Threads number - [Default: 1].",
+                    default=1,
                     type=int,
                     action='store')
 
@@ -125,8 +126,17 @@ args = parser.parse_args()
 
 def keyboardInterruptHandler(signal, frame):
     global exitFlag
-    exitFlag = 1
-    cprint('[•] Operation was canceled by user!!!', "red")
+    global timeout
+    cprint('[•] Operation was canceled by user !!!', "red")
+    while True:
+        resp = input("[•] Do you want to wait active threads to bring their results? [y/N]").lower()
+        if resp == 'n' or resp == '':
+            exit()
+        elif resp == 'y':
+            timeout = 0.1
+            exitFlag = 1
+            cprint('[•] Waiting for active threads to finish...', "red")
+            break
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
@@ -136,8 +146,7 @@ signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
 class thread_request (threading.Thread):
 
-    def __init__(self, threadID, q, dns_callback_host):
-
+    def __init__(self, threadID, q, dns_callback_host, *args, **kwargs):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.q = q
@@ -145,9 +154,9 @@ class thread_request (threading.Thread):
 
     def run(self):
 
-        cprint (" [-] Starting thread %s ... " % (self.threadID))
+        cprint ("[•] Starting thread %s ... " % (self.threadID))
         process_request(self.threadID, self.q, self.dns_callback_host)
-        cprint (" [-] Exiting thread %s." % (self.threadID))
+        cprint ("[•] Exiting thread %s." % (self.threadID))
 
 def process_request(threadID, q, dns_callback_host):
     global exitFlag
@@ -157,8 +166,6 @@ def process_request(threadID, q, dns_callback_host):
         if not workQueue.empty():
             url = q.get()
             queueLock.release()
-
-            #print ("%s processing %s" % (threadID, url))
             scan_url(url, dns_callback_host)
 
         else:
@@ -377,7 +384,6 @@ def main():
     cprint("[%] Checking for Log4j RCE CVE-2021-44228.", "magenta")
 
     workQueue = queue.Queue(len(urls))
-    threads = []
 
     # Fill the queue
     queueLock.acquire()
@@ -389,6 +395,7 @@ def main():
     # Create new threads
     for t in range(1,args.threads+1):
         thread = thread_request(t, workQueue, dns_callback_host)
+        thread.daemon = True
         thread.start()
         threads.append(thread)
 
@@ -421,9 +428,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\nKeyboardInterrupt Detected.")
-        print("Exiting...")
-        exit(0)
+    main()
