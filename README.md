@@ -81,19 +81,22 @@ $ python3 log4j-scan.py -u https://log4j.lab.secbot.local --waf-bypass
 $ python3 log4j-scan.py -l urls.txt
 ```
 
-
-
 # Installation
 
 ```
 $ pip3 install -r requirements.txt
 ```
 
-# Execute with Docker
+# Docker Support
 
 ```shell
+git clone https://github.com/fullhunt/log4j-scan.git
+cd log4j-scan
 sudo docker build -t log4j-scan .
 sudo docker run -it --rm log4j-scan
+
+# With URL list "urls.txt" in current directory
+docker run -it --rm -v $PWD:/data log4j-scan -l /data/urls.txt
 ```
 
 # About FullHunt
