@@ -37,7 +37,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -u URL, --url URL     Check a single URL.
   -p PROXY, --proxy PROXY
-                        Send requests through proxy.
+                        Send requests through proxy. proxy should be specified in the format supported by requests
+                        (http[s]://<proxy-ip>:<proxy-port>)
   -l USEDLIST, --list USEDLIST
                         Check a list of URLs.
   --request-type REQUEST_TYPE
