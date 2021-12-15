@@ -54,6 +54,8 @@ optional arguments:
                         DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].
   --custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST
                         Custom DNS Callback Host.
+  --disable-http-redirects
+                        Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.
 ```
 
 ## Scan a Single URL
