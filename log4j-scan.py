@@ -109,6 +109,10 @@ parser.add_argument("--custom-dns-callback-host",
                     dest="custom_dns_callback_host",
                     help="Custom DNS Callback Host.",
                     action='store')
+parser.add_argument("--disable-http-redirects",
+                    dest="disable_redirects",
+                    help="Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.",
+                    action='store_true')
 
 args = parser.parse_args()
 
@@ -265,6 +269,7 @@ def scan_url(url, callback_host):
                                  headers=get_fuzzing_headers(payload),
                                  verify=False,
                                  timeout=timeout,
+                                 redirects=(not args.disable_redirects),
                                  proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
@@ -279,6 +284,7 @@ def scan_url(url, callback_host):
                                  data=get_fuzzing_post_data(payload),
                                  verify=False,
                                  timeout=timeout,
+                                 redirects=(not args.disable_redirects),
                                  proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
@@ -292,6 +298,7 @@ def scan_url(url, callback_host):
                                  json=get_fuzzing_post_data(payload),
                                  verify=False,
                                  timeout=timeout,
+                                 redirects=(not args.disable_redirects),
                                  proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
