@@ -156,11 +156,15 @@ def generate_waf_bypass_payloads(callback_host, random_string):
 class Dnslog(object):
     def __init__(self):
         self.s = requests.session()
-        req = self.s.get("http://www.dnslog.cn/getdomain.php", timeout=30)
+        req = self.s.get("http://www.dnslog.cn/getdomain.php",
+                         proxies=proxies,
+                         timeout=30)
         self.domain = req.text
 
     def pull_logs(self):
-        req = self.s.get("http://www.dnslog.cn/getrecords.php", timeout=30)
+        req = self.s.get("http://www.dnslog.cn/getrecords.php",
+                         proxies=proxies,
+                         timeout=30)
         return req.json()
 
 
@@ -186,6 +190,8 @@ class Interactsh:
 
         self.session = requests.session()
         self.session.headers = self.headers
+        self.session.verify = False
+        self.session.proxies = proxies
         self.register()
 
     def register(self):
@@ -269,7 +275,7 @@ def scan_url(url, callback_host):
                                  headers=get_fuzzing_headers(payload),
                                  verify=False,
                                  timeout=timeout,
-                                 redirects=(not args.disable_redirects),
+                                 allow_redirects=(not args.disable_redirects),
                                  proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
@@ -284,7 +290,7 @@ def scan_url(url, callback_host):
                                  data=get_fuzzing_post_data(payload),
                                  verify=False,
                                  timeout=timeout,
-                                 redirects=(not args.disable_redirects),
+                                 allow_redirects=(not args.disable_redirects),
                                  proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
@@ -298,7 +304,7 @@ def scan_url(url, callback_host):
                                  json=get_fuzzing_post_data(payload),
                                  verify=False,
                                  timeout=timeout,
-                                 redirects=(not args.disable_redirects),
+                                 allow_redirects=(not args.disable_redirects),
                                  proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
