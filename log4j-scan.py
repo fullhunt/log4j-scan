@@ -19,9 +19,9 @@ import json
 import random
 from uuid import uuid4
 from base64 import b64encode
-from Crypto.Cipher import AES, PKCS1_OAEP
-from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA256
+from Cryptodome.Cipher import AES, PKCS1_OAEP
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Hash import SHA256
 from termcolor import cprint
 
 
