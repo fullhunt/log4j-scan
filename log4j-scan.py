@@ -122,6 +122,11 @@ parser.add_argument("--disable-http-redirects",
                     dest="disable_redirects",
                     help="Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.",
                     action='store_true')
+parser.add_argument("--target-parameters",
+                    dest="target_parameters",
+                    help="Provide target paramters seperated by commas (Default : v)",
+                    default="v",
+                    action='store')
 
 args = parser.parse_args()
 
@@ -129,6 +134,11 @@ args = parser.parse_args()
 proxies = {}
 if args.proxy:
     proxies = {"http": args.proxy, "https": args.proxy}
+
+
+if args.target_parameters:
+    args.target_parameters = args.target_parameters.split(',')
+
 
 def get_fuzzing_headers(payload):
     fuzzing_headers = {}
@@ -274,49 +284,51 @@ def scan_url(url, callback_host):
     payloads = [payload]
     if args.waf_bypass_payloads:
         payloads.extend(generate_waf_bypass_payloads(f'{parsed_url["host"]}.{callback_host}', random_string))
+
     for payload in payloads:
         cprint(f"[•] URL: {url} | PAYLOAD: {payload}", "cyan")
-        if args.request_type.upper() == "GET" or args.run_all_tests:
-            try:
-                requests.request(url=url,
-                                 method="GET",
-                                 params={"v": payload},
-                                 headers=get_fuzzing_headers(payload),
-                                 verify=False,
-                                 timeout=timeout,
-                                 allow_redirects=(not args.disable_redirects),
-                                 proxies=proxies)
-            except Exception as e:
-                cprint(f"EXCEPTION: {e}")
+        for param in args.target_parameters:
+            if args.request_type.upper() == "GET" or args.run_all_tests:
+                try:
+                    requests.request(url=url,
+                                    method="GET",
+                                    params={param: payload},
+                                    headers=get_fuzzing_headers(payload),
+                                    verify=False,
+                                    timeout=timeout,
+                                    allow_redirects=(not args.disable_redirects),
+                                    proxies=proxies)
+                except Exception as e:
+                    cprint(f"EXCEPTION: {e}")
 
-        if args.request_type.upper() == "POST" or args.run_all_tests:
-            try:
-                # Post body
-                requests.request(url=url,
-                                 method="POST",
-                                 params={"v": payload},
-                                 headers=get_fuzzing_headers(payload),
-                                 data=get_fuzzing_post_data(payload),
-                                 verify=False,
-                                 timeout=timeout,
-                                 allow_redirects=(not args.disable_redirects),
-                                 proxies=proxies)
-            except Exception as e:
-                cprint(f"EXCEPTION: {e}")
+            if args.request_type.upper() == "POST" or args.run_all_tests:
+                try:
+                    # Post body
+                    requests.request(url=url,
+                                    method="POST",
+                                    params={param: payload},
+                                    headers=get_fuzzing_headers(payload),
+                                    data=get_fuzzing_post_data(payload),
+                                    verify=False,
+                                    timeout=timeout,
+                                    allow_redirects=(not args.disable_redirects),
+                                    proxies=proxies)
+                except Exception as e:
+                    cprint(f"EXCEPTION: {e}")
 
-            try:
-                # JSON body
-                requests.request(url=url,
-                                 method="POST",
-                                 params={"v": payload},
-                                 headers=get_fuzzing_headers(payload),
-                                 json=get_fuzzing_post_data(payload),
-                                 verify=False,
-                                 timeout=timeout,
-                                 allow_redirects=(not args.disable_redirects),
-                                 proxies=proxies)
-            except Exception as e:
-                cprint(f"EXCEPTION: {e}")
+                try:
+                    # JSON body
+                    requests.request(url=url,
+                                    method="POST",
+                                    params={param: payload},
+                                    headers=get_fuzzing_headers(payload),
+                                    json=get_fuzzing_post_data(payload),
+                                    verify=False,
+                                    timeout=timeout,
+                                    allow_redirects=(not args.disable_redirects),
+                                    proxies=proxies)
+                except Exception as e:
+                    cprint(f"EXCEPTION: {e}")
 
 
 def main():
