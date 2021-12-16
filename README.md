@@ -50,6 +50,7 @@ optional arguments:
   --wait-time WAIT_TIME
                         Wait time after all URLs are processed (in seconds) - [Default: 5].
   --waf-bypass          Extend scans with WAF bypass payloads.
+  --custom-waf-bypass   Use your own custom payload.
   --dns-callback-provider DNS_CALLBACK_PROVIDER
                         DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].
   --custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST
