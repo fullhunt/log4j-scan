@@ -56,6 +56,8 @@ optional arguments:
                         Custom DNS Callback Host.
   --disable-http-redirects
                         Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.
+  --bypass-proxy-for-target-urls
+                        Bypass proxies to send request to target URLs. Use only for DNS callback provider.
 ```
 
 ## Scan a Single URL
