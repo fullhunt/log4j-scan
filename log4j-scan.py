@@ -213,6 +213,16 @@ class Interactsh:
         self.session.verify = False
         self.session.proxies = proxies
         self.register()
+    
+    def deregister(self):
+        """
+        : deregister token to save interactsh's servers some free space.
+        """
+        data = {
+            "secret-key": self.secret,
+            "correlation-id": self.correlation_id
+        }
+        requests.post(f"https://{self.server}/deregister", json=data, headers=self.headers, timeout=1, verify=False)
 
     def register(self):
         data = {
@@ -379,6 +389,7 @@ def main():
         cprint("[!!!] Target Affected", "yellow")
         for i in records:
             cprint(i, "yellow")
+    dns_callback.deregister()
 
 
 if __name__ == "__main__":
