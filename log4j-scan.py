@@ -16,7 +16,6 @@ import sys
 from urllib import parse as urlparse
 import base64
 import json
-import random
 from uuid import uuid4
 from base64 import b64encode
 from Crypto.Cipher import AES, PKCS1_OAEP
@@ -72,7 +71,7 @@ parser.add_argument("-u", "--url",
                     action='store')
 parser.add_argument("-p", "--proxy",
                     dest="proxy",
-                    help="send requests through proxy",
+                    help="Send requests through proxy. proxy should be specified in the format supported by requests (http[s]://<proxy-ip>:<proxy-port>)",
                     action='store')
 parser.add_argument("-l", "--list",
                     dest="usedlist",
@@ -130,6 +129,7 @@ args = parser.parse_args()
 proxies = {}
 if args.proxy:
     proxies = {"http": args.proxy, "https": args.proxy}
+
 
 def get_fuzzing_headers(payload):
     fuzzing_headers = {}
@@ -337,7 +337,7 @@ def main():
     dns_callback_host = ""
     if args.custom_dns_callback_host:
         cprint(f"[•] Using custom DNS Callback host [{args.custom_dns_callback_host}]. No verification will be done after sending fuzz requests.")
-        dns_callback_host =  args.custom_dns_callback_host
+        dns_callback_host = args.custom_dns_callback_host
     else:
         cprint(f"[•] Initiating DNS callback server ({args.dns_callback_provider}).")
         if args.dns_callback_provider == "interact.sh":
@@ -362,7 +362,7 @@ def main():
     time.sleep(int(args.wait_time))
     records = dns_callback.pull_logs()
     if len(records) == 0:
-        cprint("[•] Targets does not seem to be vulnerable.", "green")
+        cprint("[•] Reachable Targets do not seem to be vulnerable.", "green")
     else:
         cprint("[!!!] Target Affected", "yellow")
         for i in records:
