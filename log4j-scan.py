@@ -16,7 +16,6 @@ import sys
 from urllib import parse as urlparse
 import base64
 import json
-import random
 from uuid import uuid4
 from base64 import b64encode
 from Crypto.Cipher import AES, PKCS1_OAEP
@@ -120,6 +119,7 @@ args = parser.parse_args()
 proxies = {}
 if args.proxy:
     proxies = {"http": args.proxy, "https": args.proxy}
+
 
 def get_fuzzing_headers(payload):
     fuzzing_headers = {}
@@ -279,7 +279,6 @@ def scan_url(url, callback_host):
                                  proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
-                cprint("the unreached target won't be scanned", "yellow")
 
         if args.request_type.upper() == "POST" or args.run_all_tests:
             try:
@@ -295,7 +294,6 @@ def scan_url(url, callback_host):
                                  proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
-                cprint("the unreached target won't be scanned", "yellow")
 
             try:
                 # JSON body
@@ -310,7 +308,6 @@ def scan_url(url, callback_host):
                                  proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
-                cprint("the unreached target won't be scanned", "yellow")
 
 
 def main():
@@ -328,7 +325,7 @@ def main():
     dns_callback_host = ""
     if args.custom_dns_callback_host:
         cprint(f"[•] Using custom DNS Callback host [{args.custom_dns_callback_host}]. No verification will be done after sending fuzz requests.")
-        dns_callback_host =  args.custom_dns_callback_host
+        dns_callback_host = args.custom_dns_callback_host
     else:
         cprint(f"[•] Initiating DNS callback server ({args.dns_callback_provider}).")
         if args.dns_callback_provider == "interact.sh":
