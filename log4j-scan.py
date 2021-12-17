@@ -66,7 +66,7 @@ parser.add_argument("-u", "--url",
                     action='store')
 parser.add_argument("-p", "--proxy",
                     dest="proxy",
-                    help="send requests through proxy",
+                    help="Send requests through proxy. proxy should be specified in the format supported by requests (http[s]://<proxy-ip>:<proxy-port>)",
                     action='store')
 parser.add_argument("-l", "--list",
                     dest="usedlist",
@@ -279,6 +279,7 @@ def scan_url(url, callback_host):
                                  proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
+                cprint("the unreached target won't be scanned", "yellow")
 
         if args.request_type.upper() == "POST" or args.run_all_tests:
             try:
@@ -294,6 +295,7 @@ def scan_url(url, callback_host):
                                  proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
+                cprint("the unreached target won't be scanned", "yellow")
 
             try:
                 # JSON body
@@ -308,6 +310,7 @@ def scan_url(url, callback_host):
                                  proxies=proxies)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
+                cprint("the unreached target won't be scanned", "yellow")
 
 
 def main():
@@ -350,7 +353,7 @@ def main():
     time.sleep(int(args.wait_time))
     records = dns_callback.pull_logs()
     if len(records) == 0:
-        cprint("[•] Targets do not seem to be vulnerable.", "green")
+        cprint("[•] Reachable Targets do not seem to be vulnerable.", "green")
     else:
         cprint("[!!!] Target Affected", "yellow")
         for i in records:
