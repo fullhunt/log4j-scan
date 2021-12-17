@@ -350,7 +350,7 @@ def main():
     time.sleep(int(args.wait_time))
     records = dns_callback.pull_logs()
     if len(records) == 0:
-        cprint("[•] Targets does not seem to be vulnerable.", "green")
+        cprint("[•] Targets do not seem to be vulnerable.", "green")
     else:
         cprint("[!!!] Target Affected", "yellow")
         for i in records:
