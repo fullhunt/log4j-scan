@@ -125,6 +125,10 @@ parser.add_argument("--disable-http-redirects",
                     dest="disable_redirects",
                     help="Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.",
                     action='store_true')
+parser.add_argument("--bypass-proxy-for-target-urls", 
+                    dest="bypass_proxy_for_target_urls", 
+                    help="Bypass proxies to send request to target URLs. Use only for DNS callback provider.", 
+                    action='store_true')
 
 args = parser.parse_args()
 
@@ -300,7 +304,7 @@ def scan_url(url, callback_host):
                                  verify=False,
                                  timeout=timeout,
                                  allow_redirects=(not args.disable_redirects),
-                                 proxies=proxies)
+                                 proxies=proxies if not args.bypass_proxy_for_target_urls else None)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
@@ -315,7 +319,7 @@ def scan_url(url, callback_host):
                                  verify=False,
                                  timeout=timeout,
                                  allow_redirects=(not args.disable_redirects),
-                                 proxies=proxies)
+                                 proxies=proxies if not args.bypass_proxy_for_target_urls else None)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
@@ -329,7 +333,7 @@ def scan_url(url, callback_host):
                                  verify=False,
                                  timeout=timeout,
                                  allow_redirects=(not args.disable_redirects),
-                                 proxies=proxies)
+                                 proxies=proxies if not args.bypass_proxy_for_target_urls else None)
             except Exception as e:
                 cprint(f"EXCEPTION: {e}")
 
