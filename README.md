@@ -37,7 +37,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -u URL, --url URL     Check a single URL.
   -p PROXY, --proxy PROXY
-                        Send requests through proxy.
+                        Send requests through proxy. proxy should be specified in the format supported by requests
+                        (http[s]://<proxy-ip>:<proxy-port>)
   -l USEDLIST, --list USEDLIST
                         Check a list of URLs.
   --request-type REQUEST_TYPE
@@ -50,6 +51,8 @@ optional arguments:
   --wait-time WAIT_TIME
                         Wait time after all URLs are processed (in seconds) - [Default: 5].
   --waf-bypass          Extend scans with WAF bypass payloads.
+  --test-CVE-2021-45046
+                        Test using payloads for CVE-2021-45046 (detection payloads).
   --custom-waf-bypass   Use your own custom payload.
   --dns-callback-provider DNS_CALLBACK_PROVIDER
                         DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].
