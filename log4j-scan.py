@@ -331,7 +331,7 @@ def scan_url(url, callback_host):
                 # Post body
                 requests.request(url=url,
                                  method="POST",
-                                 params=args.target_parameters},
+                                 params=args.target_parameters,
                                  headers=get_fuzzing_headers(payload),
                                  data=get_fuzzing_post_data(payload),
                                  verify=False,
