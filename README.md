@@ -67,6 +67,8 @@ optional arguments:
                         Custom DNS Callback Host.
   --disable-http-redirects
                         Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.
+  -o --obfuscate
+                        Hide URL in DNS sinkholes by MD5 hashing the URL
 ```
 
 ## Scan a Single URL

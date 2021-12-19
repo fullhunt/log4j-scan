@@ -127,7 +127,7 @@ parser.add_argument("--disable-http-redirects",
                     action='store_true')
 parser.add_argument("-o","--obfuscate",
                     dest="obfuscate",
-                    help="Hide URL in DNS sinkholes by MD5 hashing.",
+                    help="Hide URL in DNS sinkholes by MD5 hashing the URL",
                     action='store_true')
 
 args = parser.parse_args()
