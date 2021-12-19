@@ -28,7 +28,7 @@ from termcolor import cprint
 
 # Disable SSL warnings
 try:
-    import requests.packages.urllib3
+    # import requests.packages.urllib3
     requests.packages.urllib3.disable_warnings()
 except Exception:
     pass
