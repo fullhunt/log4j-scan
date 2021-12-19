@@ -22,7 +22,7 @@ def main():
                 i = i.strip()
                 if i == "" or i.startswith("#"):
                     continue
-                d.write(str(i) + ': ' + hashlib.md5(i.encode('utf-8')).hexdigest() + '\n')
+                d.write(str(i) + ',' + hashlib.md5(i.encode('utf-8')).hexdigest() + '\n')
 
 if __name__ == "__main__":
     try:
