@@ -1,0 +1,4 @@
+pytest
+pytest-mock
+pytest-cov
+requests-mock

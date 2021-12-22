@@ -112,6 +112,26 @@ sudo docker run -it --rm log4j-scan
 docker run -it --rm -v $PWD:/data log4j-scan -l /data/urls.txt
 ```
 
+# Unit tests execution
+
+[pytest](https://docs.pytest.org/en/latest/) framework is used:
+
+```
+virtualenv ~/tmp/venv-log4j-scan
+source ~/tmp/venv-log4j-scan/bin/activate
+pip install -r requirements.txt
+pip install -r tests/requirements.txt
+    
+# Execute all unit tests 
+pytest
+    
+# Way to execute one unit test method
+pytest -k "default"
+pytest tests/test_log4j_scan.py::test_default
+```
+
+**NB**: Could only be executed on Linux, *termios* pip module can't be installed on Windows. 
+
 # About FullHunt
 
 FullHunt is the next-generation attack surface management platform. FullHunt enables companies to discover all of their attack surfaces, monitor them for exposure, and continuously scan them for the latest security vulnerabilities. All, in a single platform, and more.
