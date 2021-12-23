@@ -40,6 +40,7 @@ $ python3 log4j-scan.py -h
 [•] Secure your External Attack Surface with FullHunt.io.
 usage: log4j-scan.py [-h] [-u URL] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing]
                      [--wait-time WAIT_TIME] [--waf-bypass] [--dns-callback-provider DNS_CALLBACK_PROVIDER] [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST]
+                     [--basic-auth-user USER] [--basic-auth-password PASSWORD] [--authorization-injection INJECTION_TYPE] [--disable-http-redirects]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -65,6 +66,12 @@ optional arguments:
                         DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].
   --custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST
                         Custom DNS Callback Host.
+  --basic-auth-user USER
+                        Preemptive basic authentication user.
+  --basic-auth-password PASSWORD
+                        Preemptive basic authentication password.
+  --authorization-injection INJECTION_TYPE
+                        Authorization injection type: (basic) - [Default: none].
   --disable-http-redirects
                         Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.
 ```

