@@ -1,0 +1,12 @@
+version: '3'
+services:
+  log4j_scan:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    entrypoint:
+      - python
+      - log4j-scan.py
+      - -u
+      - 'http://localhost:8080/api/auth/'
+      - --run-all-tests
