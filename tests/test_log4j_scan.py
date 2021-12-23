@@ -34,13 +34,30 @@ def test_default(requests_mock, capsys):
     assert 'Authorization' not in adapter_endpoint.last_request.headers
 
 
-def test_custom_dns_callback_host(requests_mock):
+def test_custom_dns_callback_host(requests_mock, capsys):
     adapter_endpoint = requests_mock.get(LOCALHOST)
     
     log4j_scan.main(['-u', LOCALHOST, '--custom-dns-callback-host', DNS_CUSTOM ])
 
     assert adapter_endpoint.call_count == 1
     assert re.match(r'\${jndi:ldap://localhost\.custom.dns.callback/.*}', adapter_endpoint.last_request.headers['User-Agent'])
+
+    captured = capsys.readouterr()
+    assert 'Using custom DNS Callback host [custom.dns.callback]' in captured.out 
+    assert 'Custom DNS Callback host is provided' in captured.out
+
+
+def test_custom_tcp_callback_host(requests_mock, capsys):
+    adapter_endpoint = requests_mock.get(LOCALHOST)
+    
+    log4j_scan.main(['-u', LOCALHOST, '--custom-tcp-callback-host', '10.42.42.42:80'])
+
+    assert adapter_endpoint.call_count == 1
+    assert re.match(r'\${jndi:ldap://10.42.42.42:80/.*}', adapter_endpoint.last_request.headers['User-Agent'])
+
+    captured = capsys.readouterr()
+    assert 'Using custom TCP Callback host [10.42.42.42:80]' in captured.out
+    assert 'Custom TCP Callback host is provided' in captured.out
 
 
 def test_authentication_basic_no_password():

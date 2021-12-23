@@ -11,6 +11,8 @@
 - Fuzzing for HTTP POST Data parameters.
 - Fuzzing for JSON data parameters.
 - Supports DNS callback for vulnerability discovery and validation.
+- Supports TCP callback for vulnerability discovery and validation on corporate network (requires [TCP receveir](./tcp-receiver)).
+- Supports preemptive basic authentication or authorization header injection (basic type)
 - WAF Bypass payloads.
 
 ---
@@ -38,8 +40,8 @@ $ python3 log4j-scan.py -h
 [•] CVE-2021-44228 - Apache Log4j RCE Scanner
 [•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.
 [•] Secure your External Attack Surface with FullHunt.io.
-usage: log4j-scan.py [-h] [-u URL] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing]
-                     [--wait-time WAIT_TIME] [--waf-bypass] [--dns-callback-provider DNS_CALLBACK_PROVIDER] [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST]
+usage: log4j-scan.py [-h] [-u URL] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing] [--wait-time WAIT_TIME] [--waf-bypass]
+                     [--dns-callback-provider DNS_CALLBACK_PROVIDER] [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST] [--custom-tcp-callback-host CUSTOM_TCP_CALLBACK_HOST]
                      [--basic-auth-user USER] [--basic-auth-password PASSWORD] [--authorization-injection INJECTION_TYPE] [--disable-http-redirects]
 
 optional arguments:
@@ -66,6 +68,8 @@ optional arguments:
                         DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].
   --custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST
                         Custom DNS Callback Host.
+  --custom-tcp-callback-host CUSTOM_TCP_CALLBACK_HOST
+                        Custom TCP Callback Host.
   --basic-auth-user USER
                         Preemptive basic authentication user.
   --basic-auth-password PASSWORD
@@ -99,6 +103,16 @@ $ python3 log4j-scan.py -u https://log4j.lab.secbot.local --waf-bypass
 
 ```shell
 $ python3 log4j-scan.py -l urls.txt
+```
+
+## Scan an URL using a custom TCP receiver
+
+In a corporate network, using external DNS could/should be forbidden, and install a dedicated corporate DNS for this scanner usage could be not trivial.
+
+A way could be to use a running simple **[TCP receiver](./tcp-receiver/)** which logs vulnerable IPs.
+
+```shell
+$ python3 log4j-scan.py -u https://log4j.lab.secbot.local --custom-tcp-callback-host 10.42.42.42:80
 ```
 
 # Installation
