@@ -38,15 +38,15 @@ $ python3 log4j-scan.py -h
 [•] CVE-2021-44228 - Apache Log4j RCE Scanner
 [•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.
 [•] Secure your External Attack Surface with FullHunt.io.
-usage: log4j-scan.py [-h] [-u URL] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing]
-                     [--wait-time WAIT_TIME] [--waf-bypass] [--dns-callback-provider DNS_CALLBACK_PROVIDER] [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST]
+usage: log4j-scan.py [-h] [-u URL] [-p PROXY] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing]
+                     [--wait-time WAIT_TIME] [--waf-bypass] [--custom-waf-bypass-payload CUSTOM_WAF_BYPASS_PAYLOAD] [--test-CVE-2021-45046]
+                     [--dns-callback-provider DNS_CALLBACK_PROVIDER] [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST] [--disable-http-redirects]
 
 optional arguments:
   -h, --help            show this help message and exit
   -u URL, --url URL     Check a single URL.
   -p PROXY, --proxy PROXY
-                        Send requests through proxy. proxy should be specified in the format supported by requests
-                        (http[s]://<proxy-ip>:<proxy-port>)
+                        send requests through proxy
   -l USEDLIST, --list USEDLIST
                         Check a list of URLs.
   --request-type REQUEST_TYPE
@@ -59,6 +59,8 @@ optional arguments:
   --wait-time WAIT_TIME
                         Wait time after all URLs are processed (in seconds) - [Default: 5].
   --waf-bypass          Extend scans with WAF bypass payloads.
+  --custom-waf-bypass-payload CUSTOM_WAF_BYPASS_PAYLOAD
+                        Test with custom WAF bypass payload.
   --test-CVE-2021-45046
                         Test using payloads for CVE-2021-45046 (detection payloads).
   --dns-callback-provider DNS_CALLBACK_PROVIDER
