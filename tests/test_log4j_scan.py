@@ -28,10 +28,28 @@ def test_default(requests_mock, capsys):
     assert adapter_endpoint.call_count == 1
     assert adapter_dns_save.call_count == 1
     assert '.interact.sh/' in captured.out
-    assert 'Targets does not seem to be vulnerable' in captured.out
+    assert 'Targets do not seem to be vulnerable' in captured.out
     assert 'jndi' in adapter_endpoint.last_request.url
     assert re.match(r'\${jndi:ldap://localhost\..*.interact\.sh/.*}', adapter_endpoint.last_request.headers['User-Agent'])
     assert 'Authorization' not in adapter_endpoint.last_request.headers
+
+
+def test_custom_waf_bypass_payload_custom_dns_callback_host(requests_mock):
+    adapter_endpoint = requests_mock.get(LOCALHOST)
+    
+    log4j_scan.main(['-u', LOCALHOST, '--custom-dns-callback-host', DNS_CUSTOM , '--waf-bypass', '--custom-waf-bypass-payload', 'test://{{callback_host}}/{{random}}' ])    
+
+    assert adapter_endpoint.call_count == 25
+    assert re.match(r'test://localhost\.custom.dns.callback/.*', adapter_endpoint.request_history[24].headers['User-Agent'])
+
+
+def test_custom_waf_bypass_payload_custom_tcp_callback_host(requests_mock):
+    adapter_endpoint = requests_mock.get(LOCALHOST)
+
+    log4j_scan.main(['-u', LOCALHOST, '--custom-tcp-callback-host', '10.42.42.42:80' , '--waf-bypass', '--custom-waf-bypass-payload', 'test://{{callback_host}}/{{random}}' ])    
+
+    assert adapter_endpoint.call_count == 25
+    assert re.match(r'test://10\.42\.42\.42:80/.*', adapter_endpoint.request_history[24].headers['User-Agent'])
 
 
 def test_custom_dns_callback_host(requests_mock, capsys):
