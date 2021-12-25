@@ -183,7 +183,7 @@ def generate_waf_bypass_payloads(callback_host, random_string):
     payloads = []
     for i in waf_bypass_payloads:
         new_payload = i.replace("{{callback_host}}", callback_host)
-        new_payload = new_payload.replace("{{random}}", f'{random_string}')
+        new_payload = new_payload.replace("{{random}}", random_string)
         payloads.append(new_payload)
     return payloads
 
