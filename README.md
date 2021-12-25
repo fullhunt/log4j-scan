@@ -61,6 +61,7 @@ optional arguments:
   --waf-bypass          Extend scans with WAF bypass payloads.
   --test-CVE-2021-45046
                         Test using payloads for CVE-2021-45046 (detection payloads).
+  --custom-waf-bypass   Use your own custom payload.
   --dns-callback-provider DNS_CALLBACK_PROVIDER
                         DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].
   --custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST

