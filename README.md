@@ -26,9 +26,9 @@ There is a patch bypass on Log4J v2.15.0 that allows a full RCE. FullHunt added 
 
 # Description
 
-We have been researching the Log4J RCE (CVE-2021-44228) since it was released, and we worked in preventing this vulnerability with our customers. We are open-sourcing an open detection and scanning tool for discovering and fuzzing for Log4J RCE CVE-2021-44228 vulnerability. This shall be used by security teams to scan their infrastructure for Log4J RCE, and also test for WAF bypasses that can result in achiving code execution on the organization's environment.
+We have been researching the Log4J RCE (CVE-2021-44228) since it was released, and we worked in preventing this vulnerability with our customers. We are open-sourcing an open detection and scanning tool for discovering and fuzzing for Log4J RCE CVE-2021-44228 vulnerability. This shall be used by security teams to scan their infrastructure for Log4J RCE, and also test for WAF bypasses that can result in achieving code execution on the organization's environment.
 
-It supports DNS OOB callbacks out of the box, there is no need to setup a DNS callback server.
+It supports DNS OOB callbacks out of the box, there is no need to set up a DNS callback server.
 
 
 
@@ -40,7 +40,8 @@ $ python3 log4j-scan.py -h
 [•] CVE-2021-44228 - Apache Log4j RCE Scanner
 [•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.
 [•] Secure your External Attack Surface with FullHunt.io.
-usage: log4j-scan.py [-h] [-u URL] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing] [--wait-time WAIT_TIME] [--waf-bypass]
+usage: log4j-scan.py [-h] [-u URL] [-l USEDLIST] [-p PROXY] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing]
+                     [--wait-time WAIT_TIME] [--waf-bypass] [--custom-waf-bypass-payload CUSTOM_WAF_BYPASS_PAYLOAD] [--test-CVE-2021-45046]
                      [--dns-callback-provider DNS_CALLBACK_PROVIDER] [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST] [--custom-tcp-callback-host CUSTOM_TCP_CALLBACK_HOST]
                      [--basic-auth-user USER] [--basic-auth-password PASSWORD] [--authorization-injection INJECTION_TYPE] [--disable-http-redirects]
 
@@ -48,8 +49,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -u URL, --url URL     Check a single URL.
   -p PROXY, --proxy PROXY
-                        Send requests through proxy. proxy should be specified in the format supported by requests
-                        (http[s]://<proxy-ip>:<proxy-port>)
+                        send requests through proxy
   -l USEDLIST, --list USEDLIST
                         Check a list of URLs.
   --request-type REQUEST_TYPE
@@ -62,6 +62,8 @@ optional arguments:
   --wait-time WAIT_TIME
                         Wait time after all URLs are processed (in seconds) - [Default: 5].
   --waf-bypass          Extend scans with WAF bypass payloads.
+  --custom-waf-bypass-payload CUSTOM_WAF_BYPASS_PAYLOAD
+                        Test with custom WAF bypass payload.
   --test-CVE-2021-45046
                         Test using payloads for CVE-2021-45046 (detection payloads).
   --dns-callback-provider DNS_CALLBACK_PROVIDER
@@ -77,7 +79,7 @@ optional arguments:
   --authorization-injection INJECTION_TYPE
                         Authorization injection type: (basic) - [Default: none].
   --disable-http-redirects
-                        Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.
+                        Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have a higher chance of reaching vulnerable systems.
 ```
 
 ## Scan a Single URL
@@ -93,7 +95,7 @@ $ python3 log4j-scan.py -u https://log4j.lab.secbot.local
 $ python3 log4j-scan.py -u https://log4j.lab.secbot.local --run-all-tests
 ```
 
-## Discover WAF bypasses on the environment.
+## Discover WAF bypasses against the environment.
 
 ```shell
 $ python3 log4j-scan.py -u https://log4j.lab.secbot.local --waf-bypass
