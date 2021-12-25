@@ -170,11 +170,9 @@ def get_fuzzing_post_data(payload):
 
 def generate_waf_bypass_payloads(callback_host, random_string):
     payloads = []
-    count = 0
     for i in waf_bypass_payloads:
-        count = count + 1
         new_payload = i.replace("{{callback_host}}", callback_host)
-        new_payload = new_payload.replace("{{random}}", f'{random_string}_{count}')
+        new_payload = new_payload.replace("{{random}}", f'{random_string}')
         payloads.append(new_payload)
     return payloads
 
