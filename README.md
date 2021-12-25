@@ -11,6 +11,8 @@
 - Fuzzing for HTTP POST Data parameters.
 - Fuzzing for JSON data parameters.
 - Supports DNS callback for vulnerability discovery and validation.
+- Supports TCP callback for vulnerability discovery and validation on corporate network (requires [TCP receveir](./tcp-receiver)).
+- Supports preemptive basic authentication or authorization header injection (basic type)
 - WAF Bypass payloads.
 
 ---
@@ -38,9 +40,10 @@ $ python3 log4j-scan.py -h
 [•] CVE-2021-44228 - Apache Log4j RCE Scanner
 [•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.
 [•] Secure your External Attack Surface with FullHunt.io.
-usage: log4j-scan.py [-h] [-u URL] [-p PROXY] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing]
+usage: log4j-scan.py [-h] [-u URL] [-l USEDLIST] [-p PROXY] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing]
                      [--wait-time WAIT_TIME] [--waf-bypass] [--custom-waf-bypass-payload CUSTOM_WAF_BYPASS_PAYLOAD] [--test-CVE-2021-45046]
-                     [--dns-callback-provider DNS_CALLBACK_PROVIDER] [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST] [--disable-http-redirects]
+                     [--dns-callback-provider DNS_CALLBACK_PROVIDER] [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST] [--custom-tcp-callback-host CUSTOM_TCP_CALLBACK_HOST]
+                     [--basic-auth-user USER] [--basic-auth-password PASSWORD] [--authorization-injection INJECTION_TYPE] [--disable-http-redirects]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -67,6 +70,14 @@ optional arguments:
                         DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].
   --custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST
                         Custom DNS Callback Host.
+  --custom-tcp-callback-host CUSTOM_TCP_CALLBACK_HOST
+                        Custom TCP Callback Host.
+  --basic-auth-user USER
+                        Preemptive basic authentication user.
+  --basic-auth-password PASSWORD
+                        Preemptive basic authentication password.
+  --authorization-injection INJECTION_TYPE
+                        Authorization injection type: (basic) - [Default: none].
   --disable-http-redirects
                         Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have a higher chance of reaching vulnerable systems.
 ```
@@ -96,6 +107,16 @@ $ python3 log4j-scan.py -u https://log4j.lab.secbot.local --waf-bypass
 $ python3 log4j-scan.py -l urls.txt
 ```
 
+## Scan an URL using a custom TCP receiver
+
+In a corporate network, using external DNS could/should be forbidden, and install a dedicated corporate DNS for this scanner usage could be not trivial.
+
+A way could be to use a running simple **[TCP receiver](./tcp-receiver/)** which logs vulnerable IPs.
+
+```shell
+$ python3 log4j-scan.py -u https://log4j.lab.secbot.local --custom-tcp-callback-host 10.42.42.42:80
+```
+
 # Installation
 
 ```
@@ -113,6 +134,26 @@ sudo docker run -it --rm log4j-scan
 # With URL list "urls.txt" in current directory
 docker run -it --rm -v $PWD:/data log4j-scan -l /data/urls.txt
 ```
+
+# Unit tests execution
+
+[pytest](https://docs.pytest.org/en/latest/) framework is used:
+
+```
+virtualenv ~/tmp/venv-log4j-scan
+source ~/tmp/venv-log4j-scan/bin/activate
+pip install -r requirements.txt
+pip install -r tests/requirements.txt
+    
+# Execute all unit tests 
+pytest
+    
+# Way to execute one unit test method
+pytest -k "default"
+pytest tests/test_log4j_scan.py::test_default
+```
+
+**NB**: Could only be executed on Linux, *termios* pip module can't be installed on Windows. 
 
 # About FullHunt
 

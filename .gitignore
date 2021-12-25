@@ -1,1 +1,5 @@
-tests/
+/.project
+/.settings/
+/.pytest_cache/
+/.pydevproject
+/**/__pycache__
