@@ -402,7 +402,7 @@ def main():
     else:
         cprint("[!!!] Targets Affected", "yellow")
         for i in records:
-            cprint(i, "yellow")
+            cprint(json.dumps(i), "yellow")
 
 
 if __name__ == "__main__":
