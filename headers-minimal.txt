@@ -1,5 +1,4 @@
-# Some security appliance seems reset requests when headers are >= ~50 => Minimal headers list.
-# Due to 'Authorization' header potentially added with some some options, this list should stay at 48 values.
+# Security appliances may reset requests when headers are larger then the typical.
 Referer
 X-Api-Version
 Accept-Charset
@@ -28,6 +27,7 @@ X-Csrf-Token
 X-Do-Not-Track
 X-Forwarded
 X-Forwarded-By
+X-Forward-For
 X-Forwarded-For
 X-Forwarded-Host
 X-Forwarded-Port
