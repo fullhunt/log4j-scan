@@ -24,9 +24,9 @@ There is a patch bypass on Log4J v2.15.0 that allows a full RCE. FullHunt added 
 
 # Description
 
-We have been researching the Log4J RCE (CVE-2021-44228) since it was released, and we worked in preventing this vulnerability with our customers. We are open-sourcing an open detection and scanning tool for discovering and fuzzing for Log4J RCE CVE-2021-44228 vulnerability. This shall be used by security teams to scan their infrastructure for Log4J RCE, and also test for WAF bypasses that can result in achiving code execution on the organization's environment.
+We have been researching the Log4J RCE (CVE-2021-44228) since it was released, and we worked in preventing this vulnerability with our customers. We are open-sourcing an open detection and scanning tool for discovering and fuzzing for Log4J RCE CVE-2021-44228 vulnerability. This shall be used by security teams to scan their infrastructure for Log4J RCE, and also test for WAF bypasses that can result in achieving code execution on the organization's environment.
 
-It supports DNS OOB callbacks out of the box, there is no need to setup a DNS callback server.
+It supports DNS OOB callbacks out of the box, there is no need to set up a DNS callback server.
 
 
 
@@ -68,7 +68,7 @@ optional arguments:
   --custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST
                         Custom DNS Callback Host.
   --disable-http-redirects
-                        Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.
+                        Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have a higher chance of reaching vulnerable systems.
 ```
 
 ## Scan a Single URL
@@ -84,7 +84,7 @@ $ python3 log4j-scan.py -u https://log4j.lab.secbot.local
 $ python3 log4j-scan.py -u https://log4j.lab.secbot.local --run-all-tests
 ```
 
-## Discover WAF bypasses on the environment.
+## Discover WAF bypasses against the environment.
 
 ```shell
 $ python3 log4j-scan.py -u https://log4j.lab.secbot.local --waf-bypass

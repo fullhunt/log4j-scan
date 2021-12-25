@@ -140,7 +140,7 @@ parser.add_argument("--custom-dns-callback-host",
                     action='store')
 parser.add_argument("--disable-http-redirects",
                     dest="disable_redirects",
-                    help="Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have higher chance of reaching vulnerable systems.",
+                    help="Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have a higher chance of reaching vulnerable systems.",
                     action='store_true')
 
 args = parser.parse_args()
