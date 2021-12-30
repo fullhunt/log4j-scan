@@ -21,7 +21,7 @@ from base64 import b64encode
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
-from termcolor import cprint
+from termcolor import cprint as color_print
 
 
 # Disable SSL warnings
@@ -32,9 +32,6 @@ except Exception:
     pass
 
 
-cprint('[•] CVE-2021-44228 - Apache Log4j RCE Scanner', "green")
-cprint('[•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.', "yellow")
-cprint('[•] Secure your External Attack Surface with FullHunt.io.', "yellow")
 
 if len(sys.argv) <= 1:
     print('\n%s -h for help.' % (sys.argv[0]))
@@ -142,6 +139,10 @@ parser.add_argument("--disable-http-redirects",
                     dest="disable_redirects",
                     help="Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have a higher chance of reaching vulnerable systems.",
                     action='store_true')
+parser.add_argument("--disable-colors",
+                    dest="disable_colors",
+                    help="Disable Colors. It can be useful to use log4j-scan with external tools that parse the output.",
+                    action='store_true')
 
 args = parser.parse_args()
 
@@ -153,6 +154,13 @@ if args.proxy:
 
 if args.custom_waf_bypass_payload:
     waf_bypass_payloads.append(args.custom_waf_bypass_payload)
+
+def cprint(m, c = None):
+    color_print(m, c) if not args.disable_colors else print(m)
+
+cprint('[•] CVE-2021-44228 - Apache Log4j RCE Scanner', "green")
+cprint('[•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.', "yellow")
+cprint('[•] Secure your External Attack Surface with FullHunt.io.', "yellow")
 
 
 def get_fuzzing_headers(payload):
