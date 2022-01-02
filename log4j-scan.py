@@ -47,6 +47,8 @@ default_headers = {
     'Accept': '*/*'  # not being tested to allow passing through checks on Accept header in older web-servers
 }
 
+basic_headers = ["User-Agent", "X-Api-Version", "Cookie", "Referer"]
+
 post_data_parameters = ["username", "user", "uname", "name", "email", "email_address", "password"]
 timeout = 4
 
@@ -104,6 +106,10 @@ parser.add_argument("--headers-file",
                     help="Headers fuzzing list - [default: headers.txt].",
                     default="headers.txt",
                     action='store')
+parser.add_argument("--use-basic-headers",
+                    dest="use_basic_headers",
+                    help="Use basic HTTP request headers only. Useful for systems that are relying on the number of HTTP request headers for blocking requests.",
+                    action='store_true')
 parser.add_argument("--run-all-tests",
                     dest="run_all_tests",
                     help="Run all available tests on each URL.",
@@ -154,22 +160,30 @@ if args.proxy:
 if args.custom_waf_bypass_payload:
     waf_bypass_payloads.append(args.custom_waf_bypass_payload)
 
-
-def get_fuzzing_headers(payload):
-    fuzzing_headers = {}
-    fuzzing_headers.update(default_headers)
-    with open(args.headers_file, "r") as f:
-        for i in f.readlines():
-            i = i.strip()
-            if i == "" or i.startswith("#"):
-                continue
-            fuzzing_headers.update({i: payload})
+def __post_process_headers(fuzzing_headers):
     if args.exclude_user_agent_fuzzing:
         fuzzing_headers["User-Agent"] = default_headers["User-Agent"]
 
     if "Referer" in fuzzing_headers:
         fuzzing_headers["Referer"] = f'https://{fuzzing_headers["Referer"]}'
     return fuzzing_headers
+
+def get_fuzzing_headers(payload):
+    fuzzing_headers = {}
+    fuzzing_headers.update(default_headers)
+    if args.use_basic_headers:
+        for i in basic_headers:
+            fuzzing_headers.update({i: payload})
+        return __post_process_headers(fuzzing_headers)
+ 
+    with open(args.headers_file, "r") as f:
+        for i in f.readlines():
+            i = i.strip()
+            if i == "" or i.startswith("#"):
+                continue
+            fuzzing_headers.update({i: payload})
+
+    return __post_process_headers(fuzzing_headers)
 
 
 def get_fuzzing_post_data(payload):
