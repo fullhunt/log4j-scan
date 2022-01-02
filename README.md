@@ -38,8 +38,8 @@ $ python3 log4j-scan.py -h
 [•] CVE-2021-44228 - Apache Log4j RCE Scanner
 [•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.
 [•] Secure your External Attack Surface with FullHunt.io.
-usage: log4j-scan.py [-h] [-u URL] [-p PROXY] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing]
-                     [--wait-time WAIT_TIME] [--waf-bypass] [--custom-waf-bypass-payload CUSTOM_WAF_BYPASS_PAYLOAD] [--test-CVE-2021-45046]
+usage: log4j-scan.py [-h] [-u URL] [-p PROXY] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--use-basic-headers] [--run-all-tests]
+                     [--exclude-user-agent-fuzzing] [--wait-time WAIT_TIME] [--waf-bypass] [--custom-waf-bypass-payload CUSTOM_WAF_BYPASS_PAYLOAD] [--test-CVE-2021-45046]
                      [--dns-callback-provider DNS_CALLBACK_PROVIDER] [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST] [--disable-http-redirects]
 
 optional arguments:
@@ -53,6 +53,7 @@ optional arguments:
                         Request Type: (get, post) - [Default: get].
   --headers-file HEADERS_FILE
                         Headers fuzzing list - [default: headers.txt].
+  --use-basic-headers   Use basic HTTP request headers only. Useful for systems that are relying on the number of HTTP request headers for blocking requests.
   --run-all-tests       Run all available tests on each URL.
   --exclude-user-agent-fuzzing
                         Exclude User-Agent header from fuzzing - useful to bypass weak checks on User-Agents.
