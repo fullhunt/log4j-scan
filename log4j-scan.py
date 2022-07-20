@@ -95,6 +95,10 @@ parser.add_argument("-l", "--list",
                     dest="usedlist",
                     help="Check a list of URLs.",
                     action='store')
+parser.add_argument("-rurl", "--resulturl",
+                    dest="url",
+                    help="The url to receive the batch result",
+                    action='store')
 parser.add_argument("--request-type",
                     dest="request_type",
                     help="Request Type: (get, post) - [Default: get].",
@@ -407,6 +411,11 @@ def main():
         cprint("[•] Targets do not seem to be vulnerable.", "green")
     else:
         cprint("[!!!] Targets Affected", "yellow")
+        if args.resulturl:
+            szData = json.dumps(records)
+            szKey =  hashlib.md5(szData.encode('utf8')).hexdigest()
+            requests.post(args.resulturl + '/scan4all_index/_doc/' + szKey, data=szData, verify=False, headers={"Content-Type": "application/json;charset=UTF-8","User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.2 Safari/605.1.15"},timeout=(10,15),allow_redirects=False)
+
         for i in records:
             cprint(json.dumps(i), "yellow")
 
