@@ -16,7 +16,7 @@
 
 # 🚨 Annoucement (October 20th, 2022)
 
-FullHunt released an update to identify Apache Commons Text RCE (CVE-2022-42889). Apache Commons Text RCE is highly similar to Log4J RCE, and we recommend patching it as soon as possible. Vulnerable applications allow a full remote-code execution. If help is needed in scanning and discovering this vulnerability on your infrastructure, please get in touch at (team@fullhunt.io).
+FullHunt released an update to identify Apache Commons Text RCE (CVE-2022-42889). Apache Commons Text RCE is highly similar to Log4J RCE, and we recommend patching it as soon as possible. Vulnerable applications allow full remote-code execution. If help is needed in scanning and discovering this vulnerability on your infrastructure, please get in touch at (team@fullhunt.io).
 
 ![](https://dkh9ehwkisc4.cloudfront.net/static/files/545a0960-3dc4-4157-bf82-c79d0b73a3e7-CVE-2022-42889-demo.png)
 
