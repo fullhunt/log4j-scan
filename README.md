@@ -20,7 +20,7 @@ FullHunt released an update to identify Apache Commons Text RCE (CVE-2022-42889)
 
 ![](https://dkh9ehwkisc4.cloudfront.net/static/files/545a0960-3dc4-4157-bf82-c79d0b73a3e7-CVE-2022-42889-demo.png)
 
-# 🚨 Announcement
+# 🚨 Announcement (December 17th, 2021)
 
 There is a patch bypass on Log4J v2.15.0 that allows a full RCE. FullHunt added community support for log4j-scan to reliably detect CVE-2021-45046. If you're having difficulty discovering and scanning your infrastructure at scale or keeping up with the Log4J threat, please get in touch at (team@fullhunt.io).
 
@@ -38,11 +38,12 @@ It supports DNS OOB callbacks out of the box, there is no need to set up a DNS c
 
 ```python
 $ python3 log4j-scan.py -h
+python3 log4j-scan.py -h
 [•] CVE-2021-44228 - Apache Log4j RCE Scanner
 [•] Scanner provided by FullHunt.io - The Next-Gen Attack Surface Management Platform.
 [•] Secure your External Attack Surface with FullHunt.io.
 usage: log4j-scan.py [-h] [-u URL] [-p PROXY] [-l USEDLIST] [--request-type REQUEST_TYPE] [--headers-file HEADERS_FILE] [--run-all-tests] [--exclude-user-agent-fuzzing]
-                     [--wait-time WAIT_TIME] [--waf-bypass] [--custom-waf-bypass-payload CUSTOM_WAF_BYPASS_PAYLOAD] [--test-CVE-2021-45046]
+                     [--wait-time WAIT_TIME] [--waf-bypass] [--custom-waf-bypass-payload CUSTOM_WAF_BYPASS_PAYLOAD] [--test-CVE-2021-45046] [--test-CVE-2022-42889]
                      [--dns-callback-provider DNS_CALLBACK_PROVIDER] [--custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST] [--disable-http-redirects]
 
 optional arguments:
@@ -66,6 +67,8 @@ optional arguments:
                         Test with custom WAF bypass payload.
   --test-CVE-2021-45046
                         Test using payloads for CVE-2021-45046 (detection payloads).
+  --test-CVE-2022-42889
+                        Test using payloads for Apache Commons Text RCE (CVE-2022-42889).
   --dns-callback-provider DNS_CALLBACK_PROVIDER
                         DNS Callback provider (Options: dnslog.cn, interact.sh) - [Default: interact.sh].
   --custom-dns-callback-host CUSTOM_DNS_CALLBACK_HOST
