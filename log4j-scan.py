@@ -275,9 +275,10 @@ class Interactsh:
         url = f"https://{self.server}/poll?id={self.correlation_id}&secret={self.secret}"
         res = self.session.get(url, headers=self.headers, timeout=30).json()
         aes_key, data_list = res['aes_key'], res['data']
-        for i in data_list:
-            decrypt_data = self.__decrypt_data(aes_key, i)
-            result.append(self.__parse_log(decrypt_data))
+        if data_list is not None:
+            for i in data_list:
+                decrypt_data = self.__decrypt_data(aes_key, i)
+                result.append(self.__parse_log(decrypt_data))
         return result
 
     def __decrypt_data(self, aes_key, data):
